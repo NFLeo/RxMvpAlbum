@@ -27,6 +27,7 @@ import com.albumselector.album.rxbus.event.CloseImageViewPageFragmentEvent;
 import com.albumselector.album.rxbus.event.ConstantsEvent;
 import com.albumselector.album.rxbus.event.ImageCheckChangeEvent;
 import com.albumselector.album.rxbus.event.OpenImagePageFragmentEvent;
+import com.albumselector.album.rxbus.event.OpenImagePreviewFragmentEvent;
 import com.albumselector.album.ui.base.BaseFragment;
 import com.albumselector.album.utils.anim.Animation;
 import com.albumselector.album.utils.anim.AnimationListener;
@@ -47,13 +48,11 @@ import rx.Subscription;
  * @author: Leo
  * @date: 2016/10/27
  */
-public class ImageFragment extends BaseFragment implements PhotoContract.View,
+public class ImageSelectFragment extends BaseFragment implements PhotoContract.View,
         RecyclerViewFinal.OnLoadMoreListener, FolderAdapter.OnRecyclerViewItemClickListener, FooterAdapter.OnItemClickListener {
 
-    public static final String TAG = ImageFragment.class.getSimpleName();
+    public static final String TAG = ImageSelectFragment.class.getSimpleName();
     private final String FOLDER_ID_KEY = "FOLDER_ID_KEY";
-    public static final String EXTRA_PREFIX = "leo.album";
-    public static final String EXTRA_CONFIGURATION = EXTRA_PREFIX +".Configuration";
 
     private RelativeLayout rlRootView;
     private RecyclerViewFinal rvImage;
@@ -81,8 +80,8 @@ public class ImageFragment extends BaseFragment implements PhotoContract.View,
     private int PageSize = 32;
     private String mFlolderId = String.valueOf(Integer.MIN_VALUE);
 
-    public static ImageFragment newInstance(Configuration configuration) {
-        ImageFragment fragment = new ImageFragment();
+    public static ImageSelectFragment newInstance(Configuration configuration) {
+        ImageSelectFragment fragment = new ImageSelectFragment();
         Bundle bundle = new Bundle();
         bundle.putParcelable(EXTRA_CONFIGURATION, configuration);
         fragment.setArguments(bundle);
@@ -181,6 +180,13 @@ public class ImageFragment extends BaseFragment implements PhotoContract.View,
                             })
                             .animate();
                 }
+            }
+        });
+
+        tvChooseCount.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                RxBus.getDefault().post(new OpenImagePreviewFragmentEvent());
             }
         });
 

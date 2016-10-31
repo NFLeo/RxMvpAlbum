@@ -36,7 +36,8 @@ public class PhotoActivity extends BaseActivity implements PhotoFragmentView<Ima
     private static final String EXTRA_PAGE_POSITION = EXTRA_PREFIX + ".PagePosition";
     private static final String EXTRA_PREVIEW_POSITION = EXTRA_PREFIX + ".PreviewPosition";
 
-    private ImageFragment imageFragment;
+    private ImageSelectFragment imageSelectFragment;
+    private ImagePreviewFragment imagePreviewFragment;
 
     private ArrayList<ImageBean> checkedList;
     private int selectedIndex = 0;
@@ -52,7 +53,7 @@ public class PhotoActivity extends BaseActivity implements PhotoFragmentView<Ima
     @Override
     protected void onCreateOk(@Nullable Bundle savedInstanceState)
     {
-        imageFragment = ImageFragment.newInstance(mConfiguration);
+        imageSelectFragment = ImageSelectFragment.newInstance(mConfiguration);
 
 //        if(!mConfiguration.isRadio()) {
 //            btnSubmit.setOnClickListener(new View.OnClickListener() {
@@ -135,14 +136,14 @@ public class PhotoActivity extends BaseActivity implements PhotoFragmentView<Ima
         selectedIndex = 0;
 
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction()
-                .replace(R.id.fragment_container, imageFragment);
+                .replace(R.id.fragment_container, imageSelectFragment);
 //        if(mImagePreviewFragment != null) {
 //            ft.hide(mImagePreviewFragment);
 //        }
 //        if(mImagePageFragment != null){
 //            ft.hide(mImagePageFragment);
 //        }
-        ft.show(imageFragment).commit();
+        ft.show(imageSelectFragment).commit();
     }
 
     @Override
@@ -152,7 +153,16 @@ public class PhotoActivity extends BaseActivity implements PhotoFragmentView<Ima
 
     @Override
     public void showImagePreviewFragment() {
+        selectedIndex = 2;
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        imagePreviewFragment = ImagePreviewFragment.newInstance(mConfiguration, previewPosition);
+        ft.add(R.id.fragment_container, imagePreviewFragment);
+//        imagePageFragment = null;
+        ft.hide(imageSelectFragment);
+        ft.show(imagePreviewFragment);
+        ft.commit();
 
+        String title = getString(R.string.gallery_page_title, previewPosition, checkedList.size());
     }
 
     private void subscribeEvent() {

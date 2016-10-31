@@ -213,6 +213,7 @@ public class ImageFileManager
 
     public static List<ImageBean> loadAllImage(Context context, String folderId, int PageIndex, int PageSize)
     {
+        ImageNum = 0;                  //初始化照片数量
         int curPageIndex = PageIndex;
         List<ImageBean> imageBeanList = new ArrayList<>();
         ContentResolver contentResolver = context.getContentResolver();
@@ -238,7 +239,7 @@ public class ImageFileManager
 
             //当相册中图片数量少于分页固定值时跳出循环
             //此时说明相册中图片已经读取完
-            if (ImageNum <= mPageSize)
+            if (ImageNum < mPageSize)
                 break;
 
             curPageIndex ++;
