@@ -3,6 +3,8 @@ package com.albumselector.album.ui;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentTransaction;
+import android.view.KeyEvent;
+import android.view.MenuItem;
 
 import com.albumselector.R;
 import com.albumselector.album.entity.ImageBean;
@@ -38,6 +40,7 @@ public class PhotoActivity extends BaseActivity implements PhotoFragmentView<Ima
 
     private ImageSelectFragment imageSelectFragment;
     private ImagePreviewFragment imagePreviewFragment;
+    private ImagePreviewFragment imagePageFragment;
 
     private ArrayList<ImageBean> checkedList;
     private int selectedIndex = 0;
@@ -137,12 +140,12 @@ public class PhotoActivity extends BaseActivity implements PhotoFragmentView<Ima
 
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, imageSelectFragment);
-//        if(mImagePreviewFragment != null) {
-//            ft.hide(mImagePreviewFragment);
-//        }
-//        if(mImagePageFragment != null){
-//            ft.hide(mImagePageFragment);
-//        }
+        if(imagePreviewFragment != null) {
+            ft.hide(imagePreviewFragment);
+        }
+        if(imagePageFragment != null){
+            ft.hide(imagePageFragment);
+        }
         ft.show(imageSelectFragment).commit();
     }
 
@@ -257,5 +260,38 @@ public class PhotoActivity extends BaseActivity implements PhotoFragmentView<Ima
 
     public List<ImageBean> getCheckedList() {
         return checkedList;
+    }
+
+    private void backAction() {
+        if((imagePreviewFragment != null && imagePreviewFragment.isVisible())
+                || (imagePageFragment != null && imagePageFragment.isVisible())){
+            showImageGridFragment();
+            return;
+        }
+        onBackPressed();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            backAction();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(keyCode == KeyEvent.KEYCODE_BACK){
+            backAction();
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        RxBus.getDefault().removeAllStickyEvents();
+        RxBus.getDefault().clear();
     }
 }

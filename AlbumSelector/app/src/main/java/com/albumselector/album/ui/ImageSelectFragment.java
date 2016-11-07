@@ -54,9 +54,7 @@ public class ImageSelectFragment extends BaseFragment implements PhotoContract.V
     public static final String TAG = ImageSelectFragment.class.getSimpleName();
     private final String FOLDER_ID_KEY = "FOLDER_ID_KEY";
 
-    private RelativeLayout rlRootView;
     private RecyclerViewFinal rvImage;
-    private RelativeLayout rlBottomBar;
     private TextView tvReview;
     private TextView tvChooseCount;
     private RelativeLayout rlFolderOverview;
@@ -109,9 +107,7 @@ public class ImageSelectFragment extends BaseFragment implements PhotoContract.V
     @Override
     protected void findView(View view)
     {
-        rlRootView = (RelativeLayout) view.findViewById(R.id.rl_root_view);
         rvImage = (RecyclerViewFinal) view.findViewById(R.id.rv_image);
-        rlBottomBar = (RelativeLayout) view.findViewById(R.id.rl_bottom_bar);
         tvReview = (TextView) view.findViewById(R.id.tv_review);
         tvChooseCount = (TextView) view.findViewById(R.id.tv_choose_count);
         rlFolderOverview = (RelativeLayout) view.findViewById(R.id.rl_folder_overview);
@@ -361,7 +357,7 @@ public class ImageSelectFragment extends BaseFragment implements PhotoContract.V
                 .subscribe(new RxBusSubscriber<CloseImageViewPageFragmentEvent>() {
                     @Override
                     protected void onEvent(CloseImageViewPageFragmentEvent closeMediaViewPageFragmentEvent) throws Exception {
-//                        mMediaGridAdapter.notifyDataSetChanged();
+                        imageAdapter.notifyDataSetChanged();
                     }
                 });
         RxBus.getDefault().add(mSubscrCloseImageViewPageFragmentEvent);
@@ -394,5 +390,12 @@ public class ImageSelectFragment extends BaseFragment implements PhotoContract.V
                 RxBus.getDefault().post(new OpenImagePageFragmentEvent(gridMediaList, pos));
             }
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        RxBus.getDefault().remove(mSubscrImageCheckChangeEvent);
+        RxBus.getDefault().remove(mSubscrCloseImageViewPageFragmentEvent);
     }
 }

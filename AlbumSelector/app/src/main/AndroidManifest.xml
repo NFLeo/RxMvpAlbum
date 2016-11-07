@@ -24,6 +24,8 @@
         </activity>
 
         <activity android:name=".album.ui.PhotoActivity"/>
+
+        <activity android:name=".album.crop.CropImageActivity" />
     </application>
 
 </manifest>

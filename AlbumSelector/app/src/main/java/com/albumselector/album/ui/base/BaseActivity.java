@@ -1,5 +1,6 @@
 package com.albumselector.album.ui.base;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,6 +24,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     private final String CLASS_NAME = getClass().getSimpleName();
 
     public Configuration mConfiguration;
+    public Context context;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -32,6 +34,8 @@ public abstract class BaseActivity extends AppCompatActivity {
         if(intent != null){
             bundle = intent.getExtras();
         }
+
+        context = this;
 
         if(savedInstanceState != null){
             mConfiguration = savedInstanceState.getParcelable(EXTRA_CONFIGURATION);

@@ -1,13 +1,12 @@
 package com.albumselector.album.ui;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.AppCompatCheckBox;
 import android.util.DisplayMetrics;
 import android.view.View;
-import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.albumselector.R;
@@ -37,20 +36,11 @@ public class ImagePreviewFragment extends BaseFragment implements ViewPager.OnPa
 
     private AppCompatCheckBox mCbCheck;
     private ViewPager mViewPager;
+    private TextView mCropView;
     private ImagePreviewAdapter imagePreviewAdapter;
     private List<ImageBean> mImageBeanList;
-    private RelativeLayout mRlRootView;
 
-    private PhotoActivity imageActivity;
     private int mPagerPosition;
-
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        if(activity instanceof  PhotoActivity) {
-            imageActivity = (PhotoActivity) activity;
-        }
-    }
 
     public static ImagePreviewFragment newInstance(Configuration configuration, int position){
         ImagePreviewFragment fragment = new ImagePreviewFragment();
@@ -69,18 +59,17 @@ public class ImagePreviewFragment extends BaseFragment implements ViewPager.OnPa
 
     @Override
     protected void findView(View view) {
-
+        mCbCheck = (AppCompatCheckBox) view.findViewById(R.id.cb_check);
+        mViewPager = (ViewPager) view.findViewById(R.id.view_pager);
+        mCropView = (TextView) view.findViewById(R.id.crop_image);
     }
 
     @Override
-    public void onViewCreatedOk(View view, @Nullable Bundle savedInstanceState) {
-        mCbCheck = (AppCompatCheckBox) view.findViewById(R.id.cb_check);
-        mViewPager = (ViewPager) view.findViewById(R.id.view_pager);
-        mRlRootView = (RelativeLayout) view.findViewById(R.id.rl_root_view);
-//        mScreenSize = DeviceUtils.getScreenSize(context);
+    public void onViewCreatedOk(View view, @Nullable Bundle savedInstanceState)
+    {
         mImageBeanList = new ArrayList<>();
-        if(imageActivity.getCheckedList() != null){
-            mImageBeanList.addAll(imageActivity.getCheckedList());
+        if(photoActivity.getCheckedList() != null){
+            mImageBeanList.addAll(photoActivity.getCheckedList());
         }
         imagePreviewAdapter = new ImagePreviewAdapter(context, mImageBeanList);
         mViewPager.setAdapter(imagePreviewAdapter);
@@ -89,6 +78,12 @@ public class ImagePreviewFragment extends BaseFragment implements ViewPager.OnPa
         if(savedInstanceState != null) {
             mPagerPosition = savedInstanceState.getInt(EXTRA_PAGE_INDEX);
         }
+
+        mCropView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+            }
+        });
     }
 
     @Override
@@ -127,8 +122,8 @@ public class ImagePreviewFragment extends BaseFragment implements ViewPager.OnPa
         ImageBean ImageBean = mImageBeanList.get(position);
         mCbCheck.setChecked(false);
         //判断是否选择
-        if(imageActivity != null && imageActivity.getCheckedList() != null){
-            mCbCheck.setChecked(imageActivity.getCheckedList().contains(ImageBean));
+        if(photoActivity != null && photoActivity.getCheckedList() != null){
+            mCbCheck.setChecked(photoActivity.getCheckedList().contains(ImageBean));
         }
 
         RxBus.getDefault().post(new ImageViewPagerChangedEvent(position, mImageBeanList.size(), true));
@@ -146,8 +141,8 @@ public class ImagePreviewFragment extends BaseFragment implements ViewPager.OnPa
     public void onClick(View view) {
         int position = mViewPager.getCurrentItem();
         ImageBean ImageBean = mImageBeanList.get(position);
-        if(mConfiguration.getMaxSize() == imageActivity.getCheckedList().size()
-                && !imageActivity.getCheckedList().contains(ImageBean)) {
+        if(mConfiguration.getMaxSize() == photoActivity.getCheckedList().size()
+                && !photoActivity.getCheckedList().contains(ImageBean)) {
             Toast.makeText(context, getResources()
                     .getString(R.string.gallery_image_max_size_tip, mConfiguration.getMaxSize()), Toast.LENGTH_SHORT).show();
             mCbCheck.setChecked(false);

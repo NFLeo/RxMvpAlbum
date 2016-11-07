@@ -1,14 +1,9 @@
 package com.albumselector.album.adapter;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.support.v7.widget.AppCompatRadioButton;
 import android.support.v7.widget.RecyclerView;
-import android.text.SpannableString;
-import android.text.Spanned;
 import android.text.TextUtils;
-import android.text.style.ForegroundColorSpan;
-import android.text.style.RelativeSizeSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -51,12 +46,13 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.BucketView
     @Override
     public void onBindViewHolder(BucketViewHolder holder, int position) {
         FolderBean bucketBean = mBucketList.get(position);
+
+        if (bucketBean == null)
+            return;
+
         String bucketName = bucketBean.getFolderName();
 
-        SpannableString nameSpannable = new SpannableString(bucketName + "\n" + bucketBean.getFolderSize() + "张");
-        nameSpannable.setSpan(new ForegroundColorSpan(Color.GRAY), bucketName.length(), nameSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        nameSpannable.setSpan(new RelativeSizeSpan(0.8f), bucketName.length(), nameSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        holder.mTvBucketName.setText(nameSpannable);
+        holder.mTvBucketName.setText(bucketName + "\n" + bucketBean.getFolderSize() + "张");
 
         if(mSelectedBucket != null && TextUtils.equals(mSelectedBucket.getFolderId(), bucketBean.getFolderId())) {
             holder.mRbSelected.setVisibility(View.VISIBLE);

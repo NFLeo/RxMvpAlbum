@@ -70,8 +70,8 @@ public abstract class BaseFragment extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        if(context instanceof PhotoActivity) {
-            photoActivity = (PhotoActivity) context;
+        if(activity instanceof PhotoActivity) {
+            photoActivity = (PhotoActivity) activity;
         }
     }
 

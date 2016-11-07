@@ -4,9 +4,11 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.media.ExifInterface;
+import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.albumselector.album.entity.FolderBean;
 import com.albumselector.album.entity.ImageBean;
@@ -102,6 +104,108 @@ public class ImageFileManager
         if (cursor != null) {
             cursor.close();
         }
+
+        return folderBeanList;
+    }
+
+    public static List<FolderBean> loadAllFolders(Context context)
+    {
+        //相册列表
+        List<FolderBean> folderBeanList = new ArrayList<>();
+        int folderSize = 0;
+
+        String firstImage = null;
+        HashSet<String> mDirPaths = new HashSet<>();
+        Uri mImageUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        ContentResolver mContentResolver = context.getContentResolver();
+
+        //查询项
+        String[] projection = new String[] {
+                MediaStore.Images.Media.BUCKET_ID,
+                MediaStore.Images.Media.DATA,
+                MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
+                MediaStore.Images.Media.ORIENTATION,
+        };
+
+        // 只查询jpeg和png的图片
+        Cursor mCursor = mContentResolver.query(mImageUri, projection,
+                MediaStore.Images.Media.MIME_TYPE + "=? or " +
+                        MediaStore.Images.Media.MIME_TYPE + "=? or " +
+                        MediaStore.Images.Media.MIME_TYPE + "=?",
+                new String[]{"image/jpeg", "image/png", "image/jpg"},
+                MediaStore.Images.Media.DATE_MODIFIED);
+        Log.e("TAG", mCursor.getCount() + "");
+
+        if (mCursor == null)
+            return null;
+
+        //设置所有相册item
+        FolderBean allFolder = new FolderBean();
+        allFolder.setFolderId(String.valueOf(Integer.MIN_VALUE));
+        allFolder.setFolderName("所有图片");
+        folderBeanList.add(allFolder);
+
+        while (mCursor.moveToNext()) {
+            String folderId = mCursor.getString(mCursor.getColumnIndex(MediaStore.Images.Media.BUCKET_ID));
+            String folderName = mCursor.getString(mCursor.getColumnIndex(MediaStore.Images.Media.BUCKET_DISPLAY_NAME));
+            String folderCover = mCursor.getString(mCursor.getColumnIndex(MediaStore.Images.Media.DATA));
+
+            //添加封面图片
+            if(TextUtils.isEmpty(allFolder.getFolderCover())) {
+                allFolder.setFolderCover(folderCover);
+            }
+
+            // 拿到第一张图片的路径
+            if (firstImage == null)
+                firstImage = folderCover;
+            // 获取该图片的父路径名
+            File parentFile = new File(folderCover);
+            if (parentFile == null)
+                continue;
+
+            String dirPath = parentFile.getParentFile().getAbsolutePath();
+            FolderBean folderBean;
+
+            File file = new File(dirPath);
+            if (file != null && file.isDirectory() && file.list().length > 0) {
+                // 利用一个HashSet防止多次扫描同一个文件夹（不加这个判断，图片多起来还是相当恐怖的~~）
+                if (mDirPaths.contains(dirPath)) {
+                    continue;
+                } else {
+                    mDirPaths.add(dirPath);
+                    // 初始化imageFloder
+                    folderBean = new FolderBean();
+                    folderBean.setFolderId(folderId);
+                    folderBean.setFolderName(folderName);
+                    folderBean.setFolderParentPath(dirPath);
+                    folderBean.setFolderCover(folderCover);
+                }
+
+                int picSize = file.list(new FilenameFilter() {
+                    @Override
+                    public boolean accept(File dir, String filename) {
+                        if (filename == null) {
+                            return false;
+                        }
+                        if (filename.endsWith(".jpg")
+                                || filename.endsWith(".gif")
+                                || filename.endsWith(".png")
+                                || filename.endsWith(".jpeg"))
+                            return true;
+                        return false;
+                    }
+                }).length;
+                folderSize += picSize;
+                folderBean.setFolderSize(picSize);
+                folderBeanList.add(folderBean);
+            }
+        }
+
+        mCursor.close();
+        // 扫描完成，辅助的HashSet也就可以释放内存了
+        mDirPaths = null;
+
+        allFolder.setFolderSize(folderSize);
 
         return folderBeanList;
     }
@@ -259,11 +363,22 @@ public class ImageFileManager
         List<ImageBean> imageBeanList = new ArrayList<>();
         Cursor cursor;
 
-        String selection = null;
-        String[] selectionArgs = null;
+        String selection;
+        String[] selectionArgs;
+
         if(!TextUtils.equals(folderId, String.valueOf(Integer.MIN_VALUE))) {
-            selection = MediaStore.Images.Media.BUCKET_ID + "=?";
-            selectionArgs = new String[]{folderId};
+            selection = MediaStore.Images.Media.BUCKET_ID + "=? and (" +
+                    MediaStore.Images.Media.MIME_TYPE + "=? or " +
+                    MediaStore.Images.Media.MIME_TYPE + "=? or " +
+                    MediaStore.Images.Media.MIME_TYPE + "=? )";
+
+            selectionArgs = new String[]{folderId, "image/jpeg", "image/png", "image/jpg"};
+        } else {
+            selection = MediaStore.Images.Media.MIME_TYPE + "=? or " +
+                    MediaStore.Images.Media.MIME_TYPE + "=? or " +
+                    MediaStore.Images.Media.MIME_TYPE + "=? ";
+
+            selectionArgs = new String[]{"image/jpeg", "image/png", "image/jpg"};
         }
 
         File file;
@@ -284,30 +399,26 @@ public class ImageFileManager
             return null;
 
         ImageNum = cursor.getCount();
-                    /*
-            In case this runnable is executed to onChange calling loadImages,
-            using countSelected variable can result in a race condition. To avoid that,
-            tempCountSelected keeps track of number of selected images. On handling
-            FETCH_COMPLETED message, countSelected is assigned value of tempCountSelected.
-             */
-        int tempCountSelected = 0;
-        if (cursor.moveToLast()) {
-            do {
 
-                long id = cursor.getLong(cursor.getColumnIndex(projection.get(0)));
-                String path = cursor.getString(cursor.getColumnIndex(projection.get(2)));
-                boolean isSelected = selectedImages.contains(id);
-                if (isSelected) {
-                    tempCountSelected++;
-                }
-
-                file = new File(path);
-                if (file.exists()) {
-                    imageBeanList.add(parseImageCursor(cursor));
-                }
-
-            } while (cursor.moveToPrevious());
+        int dataColumnIndex = cursor.getColumnIndex(MediaStore.Images.Media.DATA);
+        while (cursor.moveToNext()) {
+            String photopath = cursor.getString(dataColumnIndex);
+            if (photopath != null && new File(photopath).exists()) {
+                imageBeanList.add(parseImageCursor(cursor));
+            }
         }
+//
+//        if (cursor.moveToLast()) {
+//            do {
+//                String path = cursor.getString(cursor.getColumnIndex(projection.get(2)));
+//
+//                file = new File(path);
+//                if (file.exists()) {
+//                    imageBeanList.add(parseImageCursor(cursor));
+//                }
+//
+//            } while (cursor.moveToPrevious());
+//        }
         cursor.close();
 
         return imageBeanList;
