@@ -43,6 +43,8 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
     private Drawable mCameraImage;
     private int mCameraTextColor;
 
+    private boolean isSignalCheck;
+
     public ImageAdapter(Context context, List<ImageBean> list, int screenWidth) {
         this.context = context;
         this.mImageBeanList = list;
@@ -74,7 +76,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
 //            if(mConfiguration.isRadio()) {
 //                holder.mCbCheck.setVisibility(View.GONE);
 //            } else{
-                holder.mCbCheck.setVisibility(View.VISIBLE);
+            holder.mCbCheck.setVisibility(View.VISIBLE);
 //                holder.mCbCheck.setOnClickListener(new OnCheckBoxClickListener(imageBean));
 //            }
             holder.mIvImageImage.setVisibility(View.VISIBLE);
@@ -111,30 +113,39 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
     //记录上次选择，用于单选
     int lastPos;
 
-    private void getSelected() {
+    private List<ImageBean> getSelected() {
+        final List<ImageBean> selectedImageBean = new ArrayList<>();
 
         Observable.from(mImageBeanList)
                 .filter(new Func1<ImageBean, Boolean>() {
-            @Override
-            public Boolean call(ImageBean imageBean) {
-                return imageBean.isSelected();
-            }
-        }).flatMap(new Func1<ImageBean, Observable<List<ImageBean>>>() {
+                    @Override
+                    public Boolean call(ImageBean imageBean) {
+                        return imageBean.isSelected() && !"".equals(imageBean.getImagePath());
+                    }
+                })
+                .flatMap(new Func1<ImageBean, Observable<List<ImageBean>>>() {
             @Override
             public Observable<List<ImageBean>> call(ImageBean imageBean) {
                 List<ImageBean> selectImageBean = new ArrayList<ImageBean>();
-                selectImageBean.add(imageBean);
+
+                if (imageBean.isSelected())
+                    selectImageBean.add(imageBean);
 
                 return Observable.just(selectImageBean);
             }
         }).subscribe(new Action1<List<ImageBean>>() {
             @Override
             public void call(List<ImageBean> imageBeen) {
+                selectedImageBean.addAll(imageBeen);
                 Log.e("SelectedImage", imageBeen.size() + "");
-                RxBus.getDefault().postSticky(new ImageSelectedEvent(imageBeen));
-                RxBus.getDefault().post(new ImageSelectedEvent(imageBeen));
             }
         });
+
+        Log.e("selectedImageBean", selectedImageBean.size() + "");
+        RxBus.getDefault().postSticky(new ImageSelectedEvent(selectedImageBean));
+        RxBus.getDefault().post(new ImageSelectedEvent(selectedImageBean));
+
+        return selectedImageBean;
     }
 
     protected class GridViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -164,15 +175,25 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
         @Override
         public void onClick(View v)
         {
-            setRadioDisChecked(parentView);
+            //获取并处理当前点击位置
             int imagePos = getLayoutPosition();
             ImageBean imageBean = mImageBeanList.get(imagePos);
+
+            if (!isSignalCheck) {
+
+                setRadioDisChecked(parentView);
+                //设置上一个view未选中状态
+                mImageBeanList.get(lastPos).setSelected(false);
+
+                lastPos = imagePos;
+            }
+
             mCbCheck.setChecked(!imageBean.isSelected());
 
+            //设置当前view状态
             mImageBeanList.get(imagePos).setSelected(!imageBean.isSelected());
-            mImageBeanList.get(lastPos).setSelected(false);
 
-            lastPos = imagePos;
+
 
             notifyItemChanged(imagePos);
 

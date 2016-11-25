@@ -298,13 +298,16 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
                 if (selectImageBeanList == null || selectImageBeanList.size() == 0)
                     return;
 
-                try {
-                    startActivityForResult(imagePickerManager.getCropPictureIntent(context,
-                            selectImageBeanList.get(0).getImagePath()), REQUEST_CODE_CROP_PHOTO);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                //直接裁剪
+//                try {
+//                    startActivityForResult(imagePickerManager.getCropPictureIntent(context,
+//                            selectImageBeanList.get(0).getImagePath()), REQUEST_CODE_CROP_PHOTO);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
 
+                startActivity(new Intent(context, PhotoPreviewActivity.class));
+                break;
             default:
                 hideFolderView(v);
                 break;
