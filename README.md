@@ -12,3 +12,19 @@
 ####图片裁剪：裁剪目前只可裁剪成正方形，暂时还未优化。
 
 ####Rxbus:项目中使用收集的RxBus，简单需求基本可以满足。
+
+##预览：
+
+![](screenshot/Albumselector_start.png)
+
+![](screenshot/Albumselector_pics.png)
+
+![](screenshot/Albumselector_folder.png)
+
+![](screenshot/Albumselector_change.png)
+
+![](screenshot/Albumselector_crop.png)
+
+![](screenshot/Albumselector_crop_max.png)
+
+![](screenshot/Albumselector_crop_success.png)
