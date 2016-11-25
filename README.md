@@ -14,17 +14,10 @@
 ####Rxbus:项目中使用收集的RxBus，简单需求基本可以满足。
 
 ##预览：
-
-![](screenshot/Albumselector_start.png)
-
-![](screenshot/Albumselector_pics.png)
-
-![](screenshot/Albumselector_folder.png)
-
-![](screenshot/Albumselector_change.png)
-
-![](screenshot/Albumselector_crop.png)
-
-![](screenshot/Albumselector_crop_max.png)
-
-![](screenshot/Albumselector_crop_success.png)
+<image src="https://github.com/NFLeo/RxMvpAlbum/tree/master/AlbumSelector/screenshot/Albumselector_start.png" width="250px"/>
+<image src="https://github.com/NFLeo/RxMvpAlbum/tree/master/AlbumSelector/screenshot/Albumselector_pics.png" width="250px"/>
+<image src="https://github.com/NFLeo/RxMvpAlbum/tree/master/AlbumSelector/screenshot/Albumselector_folder.png" width="250px"/>
+<image src="https://github.com/NFLeo/RxMvpAlbum/tree/master/AlbumSelector/screenshot/Albumselector_change.png" width="250px"/>
+<image src="https://github.com/NFLeo/RxMvpAlbum/tree/master/AlbumSelector/screenshot/Albumselector_crop.png" width="250px"/>
+<image src="https://github.com/NFLeo/RxMvpAlbum/tree/master/AlbumSelector/screenshot/Albumselector_crop_max.png" width="250px"/>
+<image src="https://github.com/NFLeo/RxMvpAlbum/tree/master/AlbumSelector/screenshot/Albumselector_crop_success.png" width="250px"/>
