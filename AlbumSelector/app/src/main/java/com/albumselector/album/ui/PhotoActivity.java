@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentTransaction;
 import android.view.KeyEvent;
-import android.view.MenuItem;
 
 import com.albumselector.R;
 import com.albumselector.album.entity.ImageBean;
@@ -30,8 +29,6 @@ import rx.functions.Func1;
  */
 public class PhotoActivity extends BaseActivity implements PhotoFragmentView<ImageBean>
 {
-    public static final int REQUEST_STORAGE_READ_ACCESS_PERMISSION = 101;
-
     private static final String EXTRA_CHECKED_LIST = EXTRA_PREFIX + ".CheckedList";
     private static final String EXTRA_SELECTED_INDEX = EXTRA_PREFIX + ".SelectedIndex";
     private static final String EXTRA_PAGE_Image_LIST = EXTRA_PREFIX + ".PageImageList";
@@ -40,7 +37,6 @@ public class PhotoActivity extends BaseActivity implements PhotoFragmentView<Ima
 
     private ImageSelectFragment imageSelectFragment;
     private ImagePreviewFragment imagePreviewFragment;
-    private ImagePreviewFragment imagePageFragment;
 
     private ArrayList<ImageBean> checkedList;
     private int selectedIndex = 0;
@@ -136,6 +132,7 @@ public class PhotoActivity extends BaseActivity implements PhotoFragmentView<Ima
     @Override
     public void showImageGridFragment()
     {
+        imagePreviewFragment = null;
         selectedIndex = 0;
 
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction()
@@ -143,9 +140,7 @@ public class PhotoActivity extends BaseActivity implements PhotoFragmentView<Ima
         if(imagePreviewFragment != null) {
             ft.hide(imagePreviewFragment);
         }
-        if(imagePageFragment != null){
-            ft.hide(imagePageFragment);
-        }
+
         ft.show(imageSelectFragment).commit();
     }
 
@@ -160,7 +155,6 @@ public class PhotoActivity extends BaseActivity implements PhotoFragmentView<Ima
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         imagePreviewFragment = ImagePreviewFragment.newInstance(mConfiguration, previewPosition);
         ft.add(R.id.fragment_container, imagePreviewFragment);
-//        imagePageFragment = null;
         ft.hide(imageSelectFragment);
         ft.show(imagePreviewFragment);
         ft.commit();
@@ -263,20 +257,11 @@ public class PhotoActivity extends BaseActivity implements PhotoFragmentView<Ima
     }
 
     private void backAction() {
-        if((imagePreviewFragment != null && imagePreviewFragment.isVisible())
-                || (imagePageFragment != null && imagePageFragment.isVisible())){
+        if((imagePreviewFragment != null && imagePreviewFragment.isVisible())){
             showImageGridFragment();
             return;
         }
         onBackPressed();
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            backAction();
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     @Override

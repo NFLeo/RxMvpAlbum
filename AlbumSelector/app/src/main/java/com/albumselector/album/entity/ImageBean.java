@@ -10,7 +10,7 @@ import android.os.Parcelable;
   */
 public class ImageBean implements Parcelable
 {
-    private long imageId;         //照片Id
+    private long imageId;           //照片Id
     private String imageFolderId;   //照片相册Id
     private String imageTitle;      //照片名
     private String imageFolderName; //照片相册名
@@ -23,6 +23,11 @@ public class ImageBean implements Parcelable
     private double longitude;       //拍摄经度
     private String mimeType;        //媒体类型
     private boolean isSelected;     //是否选中
+
+    public ImageBean(String imagePath, boolean isSelected) {
+        this.isSelected = isSelected;
+        this.imagePath = imagePath;
+    }
 
     public String getImageFolderId() {
         return imageFolderId;
@@ -130,6 +135,10 @@ public class ImageBean implements Parcelable
 
 
     public ImageBean() {
+    }
+
+    public ImageBean(String imagePath) {
+        this.imagePath = imagePath;
     }
 
     @Override

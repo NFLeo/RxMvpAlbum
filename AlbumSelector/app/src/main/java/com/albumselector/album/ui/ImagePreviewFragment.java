@@ -1,5 +1,7 @@
 package com.albumselector.album.ui;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewPager;
@@ -18,6 +20,8 @@ import com.albumselector.album.rxbus.event.CloseImageViewPageFragmentEvent;
 import com.albumselector.album.rxbus.event.ImageCheckChangeEvent;
 import com.albumselector.album.rxbus.event.ImageViewPagerChangedEvent;
 import com.albumselector.album.ui.base.BaseFragment;
+import com.albumselector.album.widget.cropimage.CropActivity;
+import com.albumselector.album.widget.cropimage.CropFragment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +35,7 @@ public class ImagePreviewFragment extends BaseFragment implements ViewPager.OnPa
         View.OnClickListener{
 
     private static final String EXTRA_PAGE_INDEX = EXTRA_PREFIX + ".PageIndex";
+    public static final int REQUEST_CROP_IMAGE = 0x4096;
 
     DisplayMetrics mScreenSize;
 
@@ -41,6 +46,7 @@ public class ImagePreviewFragment extends BaseFragment implements ViewPager.OnPa
     private List<ImageBean> mImageBeanList;
 
     private int mPagerPosition;
+    private String imagePath;
 
     public static ImagePreviewFragment newInstance(Configuration configuration, int position){
         ImagePreviewFragment fragment = new ImagePreviewFragment();
@@ -79,9 +85,14 @@ public class ImagePreviewFragment extends BaseFragment implements ViewPager.OnPa
             mPagerPosition = savedInstanceState.getInt(EXTRA_PAGE_INDEX);
         }
 
+        imagePath = mImageBeanList.get(0).getImagePath();
+
         mCropView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Intent intent = new Intent(context, CropActivity.class);
+                intent.putExtra(CropFragment.ARG_IMAGE_PATH, imagePath);
+                startActivityForResult(intent, REQUEST_CROP_IMAGE);
             }
         });
     }
@@ -119,11 +130,13 @@ public class ImagePreviewFragment extends BaseFragment implements ViewPager.OnPa
     @Override
     public void onPageSelected(int position) {
         mPagerPosition = position;
-        ImageBean ImageBean = mImageBeanList.get(position);
+        ImageBean imageBean = mImageBeanList.get(position);
+        imagePath = imageBean.getImagePath();
+
         mCbCheck.setChecked(false);
         //判断是否选择
         if(photoActivity != null && photoActivity.getCheckedList() != null){
-            mCbCheck.setChecked(photoActivity.getCheckedList().contains(ImageBean));
+            mCbCheck.setChecked(photoActivity.getCheckedList().contains(imageBean));
         }
 
         RxBus.getDefault().post(new ImageViewPagerChangedEvent(position, mImageBeanList.size(), true));
@@ -148,6 +161,20 @@ public class ImagePreviewFragment extends BaseFragment implements ViewPager.OnPa
             mCbCheck.setChecked(false);
         } else {
             RxBus.getDefault().post(new ImageCheckChangeEvent(ImageBean));
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == Activity.RESULT_OK) {
+            String path = data.getStringExtra(CropActivity.CROP_RESULT);
+            ImageBean imageBean = new ImageBean();
+            imageBean.setImagePath(path);
+            mImageBeanList.add(imageBean);
+
+            imagePreviewAdapter.notifyDataSetChanged();
         }
     }
 

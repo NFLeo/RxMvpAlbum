@@ -55,7 +55,7 @@ public class FooterAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         this.mOnItemClickListener = listener;
     }
 
-    public interface OnItemClickListener{
+    public interface OnItemClickListener {
         void onItemClick(RecyclerView.ViewHolder holder, int position);
     }
 

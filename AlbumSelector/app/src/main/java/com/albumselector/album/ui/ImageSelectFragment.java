@@ -1,6 +1,11 @@
 package com.albumselector.album.ui;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -13,6 +18,8 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.albumselector.R;
+import com.albumselector.album.AsyncTask.BGAAsyncTask;
+import com.albumselector.album.AsyncTask.BGALoadPhotoTask;
 import com.albumselector.album.adapter.FolderAdapter;
 import com.albumselector.album.adapter.ImageAdapter;
 import com.albumselector.album.contract.PhotoContract;
@@ -29,6 +36,8 @@ import com.albumselector.album.rxbus.event.ImageCheckChangeEvent;
 import com.albumselector.album.rxbus.event.OpenImagePageFragmentEvent;
 import com.albumselector.album.rxbus.event.OpenImagePreviewFragmentEvent;
 import com.albumselector.album.ui.base.BaseFragment;
+import com.albumselector.album.utils.ImageFileManager;
+import com.albumselector.album.utils.MediaScanner;
 import com.albumselector.album.utils.anim.Animation;
 import com.albumselector.album.utils.anim.AnimationListener;
 import com.albumselector.album.utils.anim.SlideInUnderneathAnimation;
@@ -38,28 +47,44 @@ import com.albumselector.album.widget.HorizontalDividerItemDecoration;
 import com.albumselector.album.widget.MarginDecoration;
 import com.albumselector.album.widget.RecyclerViewFinal;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
+import rx.Observer;
+import rx.Subscriber;
 import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 /**
  * @desc:
  * @author: Leo
  * @date: 2016/10/27
  */
-public class ImageSelectFragment extends BaseFragment implements PhotoContract.View,
-        RecyclerViewFinal.OnLoadMoreListener, FolderAdapter.OnRecyclerViewItemClickListener, FooterAdapter.OnItemClickListener {
+public class ImageSelectFragment extends BaseFragment implements PhotoContract.View, 
+        MediaScanner.ScanCallback, RecyclerViewFinal.OnLoadMoreListener,
+        BGAAsyncTask.Callback<ArrayList<FolderBean>>,
+        FolderAdapter.OnRecyclerViewItemClickListener, FooterAdapter.OnItemClickListener {
 
     public static final String TAG = ImageSelectFragment.class.getSimpleName();
     private final String FOLDER_ID_KEY = "FOLDER_ID_KEY";
+    private final String IMAGE_STORE_FILE_NAME = "IMG_%s.jpg";
 
     private RecyclerViewFinal rvImage;
     private TextView tvReview;
     private TextView tvChooseCount;
     private RelativeLayout rlFolderOverview;
     private RecyclerView rvFolder;
-    private LinearLayout llEmptyView;
+
+    private MediaScanner mMediaScanner;
+
+    private File mImageStoreDir;
+    private String mImagePath;
 
     private PhotoPresenterImpl photoPresenter;
     private PhotoModelImpl photoModel;
@@ -84,6 +109,13 @@ public class ImageSelectFragment extends BaseFragment implements PhotoContract.V
         bundle.putParcelable(EXTRA_CONFIGURATION, configuration);
         fragment.setArguments(bundle);
         return fragment;
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        mImageStoreDir = new File(Environment.getExternalStorageDirectory(), "/DCIM/RxGalleryFinal/");
+        mMediaScanner = new MediaScanner(context);
     }
 
     @Override
@@ -112,13 +144,24 @@ public class ImageSelectFragment extends BaseFragment implements PhotoContract.V
         tvChooseCount = (TextView) view.findViewById(R.id.tv_choose_count);
         rlFolderOverview = (RelativeLayout) view.findViewById(R.id.rl_folder_overview);
         rvFolder = (RecyclerView) view.findViewById(R.id.rv_folder);
-        llEmptyView = (LinearLayout) view.findViewById(R.id.ll_empty_view);
+    }
+
+    /**
+     * 是否可以拍照
+     */
+    private boolean mTakePhotoEnabled;
+
+    private BGALoadPhotoTask mLoadPhotoTask;
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        new BGALoadPhotoTask(this, context, mTakePhotoEnabled);
     }
 
     private void setView()
     {
         //初始化图片墙
-        rvImage.setEmptyView(llEmptyView);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(context, 3);
         gridLayoutManager.setOrientation(GridLayoutManager.VERTICAL);
         rvImage.addItemDecoration(new MarginDecoration(context));
@@ -367,15 +410,12 @@ public class ImageSelectFragment extends BaseFragment implements PhotoContract.V
     public void onItemClick(RecyclerView.ViewHolder holder, int position) {
         ImageBean imageBean = imageBeanList.get(position);
         if (imageBean.getImageId() == Integer.MIN_VALUE) {
-//
-//            if (!CameraUtils.hasCamera(getContext())) {
-//                Toast.makeText(getContext(), R.string.gallery_device_no_camera_tips, Toast.LENGTH_SHORT).show();
-//                return;
-//            }
+
+            openCamera();
 
         } else {
             if (mConfiguration.isRadio()) {
-//                radioNext(mediaBean);
+//                radioNext(ImageBean);
             } else {
                 ImageBean firstBean = imageBeanList.get(0);
                 ArrayList<ImageBean> gridMediaList = new ArrayList<>();
@@ -392,10 +432,114 @@ public class ImageSelectFragment extends BaseFragment implements PhotoContract.V
         }
     }
 
+    private String mCurrentPhotoPath;
+    private File mImageDir;
+
+    private File createImageFile() throws IOException {
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File image = File.createTempFile(imageFileName, ".jpg", mImageDir);
+        mCurrentPhotoPath = image.getAbsolutePath();
+        return image;
+    }
+
+    public Intent getTakePictureIntent() throws IOException {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(context.getPackageManager()) != null) {
+            File photoFile = createImageFile();
+            if (photoFile != null) {
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+            }
+        }
+        return takePictureIntent;
+    }
+
+    private void openCamera() {
+
+
+        try {
+            startActivityForResult(getTakePictureIntent(), TAKE_IMAGE_REQUEST_CODE);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+//        Intent captureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+//        if (captureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+//            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss", Locale.CHINA);
+//            String filename = String.format(IMAGE_STORE_FILE_NAME, dateFormat.format(new Date()));
+//            mImagePath = new File(mImageStoreDir, filename).getAbsolutePath();
+//            captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(new File(mImagePath)));
+//            startActivityForResult(captureIntent, TAKE_IMAGE_REQUEST_CODE);
+//        } else {
+////            Toast.makeText(getContext(), R.string.gallery_device_camera_unable, Toast.LENGTH_SHORT).show();
+//        }
+    }
+
+    private final int TAKE_IMAGE_REQUEST_CODE = 1001;
+    
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == TAKE_IMAGE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+
+            ImageBean cameraPath = new ImageBean(mImagePath);
+            imageBeanList.add(0, cameraPath);
+            imageAdapter.notifyDataSetChanged();
+
+            //刷新相册数据库
+            mMediaScanner.scanFile(mImagePath, "image/jpeg", this);
+        }
+    }
+    
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         RxBus.getDefault().remove(mSubscrImageCheckChangeEvent);
         RxBus.getDefault().remove(mSubscrCloseImageViewPageFragmentEvent);
+    }
+
+    @Override
+    public void onScanCompleted(String[] images) {
+        if(images == null || images.length == 0){
+            return;
+        }
+
+        rx.Observable.create(new rx.Observable.OnSubscribe<List<ImageBean>>() {
+            @Override
+            public void call(Subscriber<? super List<ImageBean>> subscriber) {
+                List<ImageBean> imageBean = ImageFileManager.loadAllImage(context, mFlolderId, PageIndex, PageSize);
+                Log.e("TIME", "time XX");
+                subscriber.onNext(imageBean);
+                subscriber.onCompleted();
+            }
+        })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<List<ImageBean>>() {
+                    @Override
+                    public void onCompleted() {
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        errorCallback();
+                    }
+
+                    @Override
+                    public void onNext(List<ImageBean> imageBeen) {
+                        Log.e("TIME", "time XXX");
+                        imageCallback(imageBeen);
+                    }
+                });
+    }
+
+    @Override
+    public void onPostExecute(ArrayList<FolderBean> folderBeen) {
+        mLoadPhotoTask = null;
+    }
+
+    @Override
+    public void onTaskCancelled() {
+        mLoadPhotoTask = null;
     }
 }

@@ -52,14 +52,21 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.BucketView
 
         String bucketName = bucketBean.getFolderName();
 
-        holder.mTvBucketName.setText(bucketName + "\n" + bucketBean.getFolderSize() + "张");
+        holder.mTvBucketName.setText(bucketName + "\n" + bucketBean.getImages().size() + "张");
 
-        if(mSelectedBucket != null && TextUtils.equals(mSelectedBucket.getFolderId(), bucketBean.getFolderId())) {
+        if (bucketBean.isCheck() && this.position == position) {
             holder.mRbSelected.setVisibility(View.VISIBLE);
             holder.mRbSelected.setChecked(true);
         } else {
             holder.mRbSelected.setVisibility(View.GONE);
         }
+
+//        if(mSelectedBucket != null && TextUtils.equals(mSelectedBucket.getFolderId(), bucketBean.getFolderId())) {
+//            holder.mRbSelected.setVisibility(View.VISIBLE);
+//            holder.mRbSelected.setChecked(true);
+//        } else {
+//            holder.mRbSelected.setVisibility(View.GONE);
+//        }
 
         String path = bucketBean.getFolderCover();
 
@@ -68,6 +75,14 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.BucketView
 
     public void setSelectedBucket(FolderBean bucketBean) {
         this.mSelectedBucket = bucketBean;
+    }
+
+    int position;
+
+    public void setSelectedBucket(FolderBean bucketBean, int position) {
+        this.mSelectedBucket = bucketBean;
+        this.position = position;
+        notifyItemChanged(position);
     }
 
     @Override
@@ -79,7 +94,7 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.BucketView
         this.mOnRecyclerViewItemClickListener = listener;
     }
 
-    class BucketViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+    class BucketViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         TextView mTvBucketName;
         SquareImageView mIvBucketCover;
@@ -120,7 +135,7 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.BucketView
             for (int i = 0; i < parentView.getChildCount(); i++) {
                 View itemView = parentView.getChildAt(i);
                 RadioButton rbSelect = (RadioButton) itemView.findViewById(R.id.rb_selected);
-                if(rbSelect!=null){
+                if(rbSelect != null) {
                     rbSelect.setVisibility(View.GONE);
                     rbSelect.setChecked(false);
                 }

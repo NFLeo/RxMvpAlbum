@@ -1,6 +1,8 @@
 package com.albumselector.album.entity;
 
- /**
+import java.util.ArrayList;
+
+/**
   * @desc:         相册实体类
   * @author:       Leo
   * @date:         2016/10/27
@@ -12,6 +14,10 @@ public class FolderBean
     private String folderCover;       //相册封面
     private String folderParentPath;  //相册绝对路径
     private int folderSize;           //相册文件大小
+    private boolean isCheck;          //相册文件选中状态
+
+    private ArrayList<ImageBean> mImages = new ArrayList<>();
+    private boolean mTakePhotoEnabled;
 
     public FolderBean(String folderId, String folderName, String folderCover, int folderSize) {
         this.folderId = folderId;
@@ -20,7 +26,44 @@ public class FolderBean
         this.folderSize = folderSize;
     }
 
+    public FolderBean(String folderName, String folderCover) {
+        this.folderName = folderName;
+        this.folderCover = folderCover;
+    }
+
+    public FolderBean(boolean takePhotoEnabled) {
+        mTakePhotoEnabled = takePhotoEnabled;
+        if (takePhotoEnabled) {
+            // 拍照
+            mImages.add(new ImageBean("", true));
+        }
+    }
+
     public FolderBean() {
+    }
+
+    public boolean isCheck() {
+        return isCheck;
+    }
+
+    public void setCheck(boolean check) {
+        isCheck = check;
+    }
+
+    public boolean isTakePhotoEnabled() {
+        return mTakePhotoEnabled;
+    }
+
+    public void addLastImage(ImageBean imagePath) {
+        mImages.add(imagePath);
+    }
+
+    public ArrayList<ImageBean> getImages() {
+        return mImages;
+    }
+
+    public int getCount() {
+        return mTakePhotoEnabled ? mImages.size() - 1 : mImages.size();
     }
 
     public String getFolderId() {

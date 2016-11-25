@@ -10,5 +10,6 @@
     <string name="gallery_loading_view_click_loading_more">加载更多</string>
     <string name="gallery_loading_view_no_more">没有更多了</string>
     <string name="gallery_loading_view_loading">加载中…</string>
+    <string name="title_activity_main2">Main2Activity</string>
 
 </resources>

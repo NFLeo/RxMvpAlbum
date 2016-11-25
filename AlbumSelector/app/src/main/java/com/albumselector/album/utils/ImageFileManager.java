@@ -403,7 +403,7 @@ public class ImageFileManager
         int dataColumnIndex = cursor.getColumnIndex(MediaStore.Images.Media.DATA);
         while (cursor.moveToNext()) {
             String photopath = cursor.getString(dataColumnIndex);
-            if (photopath != null && new File(photopath).exists()) {
+            if (photopath != null ) {
                 imageBeanList.add(parseImageCursor(cursor));
             }
         }
