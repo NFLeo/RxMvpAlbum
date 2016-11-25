@@ -295,6 +295,9 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
                 break;
             case R.id.tv_choose_count:
 
+                if (selectImageBeanList == null || selectImageBeanList.size() == 0)
+                    return;
+
                 try {
                     startActivityForResult(imagePickerManager.getCropPictureIntent(context,
                             selectImageBeanList.get(0).getImagePath()), REQUEST_CODE_CROP_PHOTO);
