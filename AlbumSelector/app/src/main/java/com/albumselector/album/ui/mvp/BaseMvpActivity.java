@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 
@@ -29,6 +30,7 @@ public abstract class BaseMvpActivity<V extends BaseView, P extends BasePresente
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.e("LIVE", "onCreate");
         context = this;
         rxBusManager = new RxBusManager();
         presenter = createPresenterInstance();
@@ -38,6 +40,7 @@ public abstract class BaseMvpActivity<V extends BaseView, P extends BasePresente
         rootView = LayoutInflater.from(this).inflate(getLayoutId(), null);
         setContentView(rootView);
         onViewCreated();
+
     }
 
     //初始化Presenter在setContentView之前

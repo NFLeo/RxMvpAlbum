@@ -11,10 +11,12 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.albumselector.R;
 import com.albumselector.album.baserx.RxBus;
 import com.albumselector.album.rxbus.event.ImageSelectedEvent;
+import com.albumselector.album.utils.AlbumBuilder;
 import com.albumselector.album.widget.RecyclerImageView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -37,15 +39,15 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
     private Context context;
     private List<String> mImageBeanList;
     private LayoutInflater mInflater;
+    private AlbumBuilder albumBuilder;
     private int mImageSize;
     private Drawable mImageViewBg;
     private Drawable mCameraImage;
     private int mCameraTextColor;
 
-    private boolean isSignalCheck;
-
-    public ImageAdapter(Context context, List<String> list, int screenWidth) {
+    public ImageAdapter(Context context, List<String> list, int screenWidth, AlbumBuilder albumBuilder) {
         this.context = context;
+        this.albumBuilder = albumBuilder;
         this.mImageBeanList = list;
         this.mInflater = LayoutInflater.from(context);
         this.mImageSize = screenWidth/3;
@@ -64,7 +66,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
             return;
 
         String imageBean = mImageBeanList.get(position);
-        if(position == 0 && "".equals(imageBean)) {
+        if(position == 0 && albumBuilder.isTakeCamera() && "".equals(imageBean)) {
             holder.mCbCheck.setVisibility(View.GONE);
             holder.mIvImageImage.setVisibility(View.GONE);
             holder.mLlCamera.setVisibility(View.VISIBLE);
@@ -72,18 +74,11 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
             holder.mTvCameraTxt.setText("Camera");
             holder.mCbCheck.setVisibility(View.GONE);
         } else {
-//            if(mConfiguration.isRadio()) {
-//                holder.mCbCheck.setVisibility(View.GONE);
-//            } else{
             holder.mCbCheck.setVisibility(View.VISIBLE);
-//                holder.mCbCheck.setOnClickListener(new OnCheckBoxClickListener(imageBean));
-//            }
             holder.mIvImageImage.setVisibility(View.VISIBLE);
             holder.mLlCamera.setVisibility(View.GONE);
 
             holder.mCbCheck.setChecked(selectedImageBean.contains(imageBean));
-
-//            String path = imageBean.getImagePath();
 
             holder.mIvImageImage.setBackground(mImageViewBg);
 
@@ -136,24 +131,21 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
             int imagePos = getLayoutPosition();
             String imageBean = mImageBeanList.get(imagePos);
 
-            if (!isSignalCheck) {
+            if (!albumBuilder.isMutiSelect()) {
 
                 //清空图片选中容器
                 selectedImageBean.clear();
-
                 setRadioDisChecked(parentView);
-                //设置上一个view未选中状态
-//                mImageBeanList.get(lastPos).setSelected(false);
-
                 lastPos = imagePos;
+            } else if (!selectedImageBean.contains(imageBean) && selectedImageBean.size() >= albumBuilder.getMaxSize()) {
+                //选满时，添加无效，删除有效
+                mCbCheck.setChecked(false);
+                Toast.makeText(context, "最多选择" + albumBuilder.getMaxSize() + "", Toast.LENGTH_SHORT).show();
+                return;
             }
 
             mCbCheck.setChecked(!selectedImageBean.contains(imageBean));
             notifySelectedImageBean(imageBean, !selectedImageBean.contains(imageBean));
-
-            //设置当前view状态
-//            mImageBeanList.get(imagePos).setSelected(!imageBean.isSelected());
-
             notifyItemChanged(imagePos);
         }
 

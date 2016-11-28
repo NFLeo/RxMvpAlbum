@@ -1,6 +1,7 @@
 package com.albumselector.album.ui;
 
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -21,11 +22,12 @@ import com.albumselector.album.entity.ImageBean;
 import com.albumselector.album.model.PhotoModelImpl;
 import com.albumselector.album.presenter.PhotoPickerPresenterImpl;
 import com.albumselector.album.presenter.PhotoPresenterImpl;
+import com.albumselector.album.rxbus.event.ImageBuilderEvent;
 import com.albumselector.album.rxbus.event.ImageSelectedEvent;
 import com.albumselector.album.rxbus.event.KeyEvent;
-import com.albumselector.album.rxbus.event.OpenImagePreviewFragmentEvent;
 import com.albumselector.album.ui.mvp.BaseMvpActivity;
 import com.albumselector.album.ui.mvp.BasePresenter;
+import com.albumselector.album.utils.AlbumBuilder;
 import com.albumselector.album.utils.ImagePickerManager;
 import com.albumselector.album.utils.MediaScanner;
 import com.albumselector.album.utils.anim.Animation;
@@ -57,15 +59,13 @@ import rx.functions.Func1;
 public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask.Callback<ArrayList<FolderBean>>,
         FolderAdapter.OnRecyclerViewItemClickListener, FooterAdapter.OnItemClickListener, View.OnClickListener
 {
-    //是否可以拍照
-    private boolean mTakePhotoEnabled = true;
-
     //拍照的请求码
     private static final int REQUEST_CODE_TAKE_PHOTO = 111;
     //裁剪的请求码
     private static final int REQUEST_CODE_CROP_PHOTO = 222;
 
     private BGALoadPhotoTask mLoadPhotoTask;
+    private AlbumBuilder albumBuilder;
 
     private RecyclerViewFinal rvImage;
     private TextView tvReview;
@@ -86,8 +86,8 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
     private List<FolderBean> folderBeanList;                   //相册数据源
 
     private ImageAdapter imageAdapter;                         //照片列表适配器
-    private List<String> imageBeanList;                     //照片数据源
-    private List<String> selectImageBeanList;               //已选照片
+    private List<String> imageBeanList;                        //照片数据源
+    private List<String> selectImageBeanList;                  //已选照片
 
     private Subscription mSubscrImageCheckChangeEvent;             //监听照片选择
     private Subscription mSubscrImageRefreshIndexEvent;            //监听照片分页查询分页序号
@@ -100,7 +100,7 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
     @Override
     public void onStart() {
         super.onStart();
-        mLoadPhotoTask = new BGALoadPhotoTask(this, context, mTakePhotoEnabled).perform();
+        mLoadPhotoTask = new BGALoadPhotoTask(this, context, albumBuilder.isTakeCamera()).perform();
     }
 
     @Override
@@ -118,17 +118,12 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
     @Override
     protected void onViewCreated() {
         initView();
-        setView();
         setData();
+        setView();
         setListener();
     }
 
     private void setData() {
-
-        if (mTakePhotoEnabled) {
-            File imageDir = new File(Environment.getExternalStorageDirectory(), "Hulabanban");
-            imagePickerManager = new ImagePickerManager(this, imageDir);
-        }
 
         rxBusManager.add(RxBus.getDefault().toObservable(ImageSelectedEvent.class)
                 .filter(new Func1<ImageSelectedEvent, Boolean>() {
@@ -143,6 +138,20 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
                         selectImageBeanList = imageSelectedEvent.getImageBean();
                     }
                 }));
+
+        rxBusManager.add(RxBus.getDefault().toObservableSticky(ImageBuilderEvent.class)
+                .subscribe(new Action1<ImageBuilderEvent>() {
+                    @Override
+                    public void call(ImageBuilderEvent imageBuilderEvent) {
+                        if (imageBuilderEvent.getImageBuilder() != null)
+                            albumBuilder = imageBuilderEvent.getImageBuilder();
+                    }
+                }));
+
+        if (albumBuilder.isTakeCamera()) {
+            File imageDir = new File(Environment.getExternalStorageDirectory(), "Hulabanban");
+            imagePickerManager = new ImagePickerManager(this, imageDir);
+        }
     }
 
     private void initView()
@@ -163,7 +172,7 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
         rvImage.setLayoutManager(gridLayoutManager);
 
         imageBeanList = new ArrayList<>();
-        imageAdapter = new ImageAdapter(context, imageBeanList, 1080);
+        imageAdapter = new ImageAdapter(context, imageBeanList, 1080, albumBuilder);
         rvImage.setAdapter(imageAdapter);
         rvImage.setOnItemClickListener(this);
 
@@ -189,8 +198,6 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
         new SlideInUnderneathAnimation(rvFolder)
                 .setDirection(Animation.DIRECTION_DOWN)
                 .animate();
-
-//        subscribeEvent();
     }
 
     @Override
@@ -235,7 +242,7 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
     @Override
     public void onItemClick(RecyclerView.ViewHolder holder, int position)
     {
-        if (mTakePhotoEnabled && position == 0)
+        if (albumBuilder.isTakeCamera() && position == 0)
         {
             try {
                 startActivityForResult(imagePickerManager.getTakePictureIntent(), REQUEST_CODE_TAKE_PHOTO);

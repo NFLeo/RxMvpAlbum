@@ -10,10 +10,12 @@ import android.widget.TextView;
 
 import com.albumselector.album.baserx.RxBus;
 import com.albumselector.album.entity.Configuration;
+import com.albumselector.album.rxbus.event.ImageBuilderEvent;
 import com.albumselector.album.rxbus.event.KeyEvent;
 import com.albumselector.album.ui.PhotoPickerActivity;
 import com.albumselector.album.ui.mvp.BaseMvpActivity;
 import com.albumselector.album.ui.mvp.BasePresenter;
+import com.albumselector.album.utils.AlbumBuilder;
 import com.bumptech.glide.Glide;
 
 import rx.Observable;
@@ -34,10 +36,21 @@ public class MainActivity extends BaseMvpActivity {
 
     @Override
     protected void onViewCreated() {
+        final AlbumBuilder.Builder builder = new AlbumBuilder.Builder();
+
         TextView textView = (TextView) findViewById(R.id.text);
         textView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                AlbumBuilder albumBuilder = builder.setCrop(true)
+                        .setMaxSize(9)
+                        .setMutiSelect(false)
+                        .setTakeCamera(true)
+                        .build();
+
+                RxBus.getDefault().postSticky(new ImageBuilderEvent(albumBuilder));
+                Intent intent = new Intent(MainActivity.this, PhotoPickerActivity.class);
+                startActivity(intent);
             }
         });
 
@@ -45,7 +58,13 @@ public class MainActivity extends BaseMvpActivity {
         textView1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                AlbumBuilder albumBuilder = builder.setCrop(true)
+                        .setMutiSelect(false)
+                        .setMaxSize(9)
+                        .setTakeCamera(true)
+                        .build();
 
+                RxBus.getDefault().postSticky(new ImageBuilderEvent(albumBuilder));
                 Intent intent = new Intent(MainActivity.this, PhotoPickerActivity.class);
                 startActivity(intent);
             }
