@@ -18,9 +18,9 @@
 ######œ‡≤·∂‡—°
 
 ##‘§¿¿£∫
-![](./screenshot/Albumselector_start.png)
-![](./screenshot/Albumselector_pics.png)
-![](./screenshot/Albumselector_folder.png)
+![](./AlbumSelector/screenshot/Albumselector_start.png)
+![](./AlbumSelector/screenshot/Albumselector_pics.png)
+![](./AlbumSelector/screenshot/Albumselector_folder.png)
 <image src="https://github.com/NFLeo/RxMvpAlbum/tree/master/AlbumSelector/screenshot/Albumselector_start.png" width="250px"/>
 <image src="https://github.com/NFLeo/RxMvpAlbum/tree/master/AlbumSelector/screenshot/Albumselector_pics.png" width="250px"/>
 <image src="https://github.com/NFLeo/RxMvpAlbum/tree/master/AlbumSelector/screenshot/Albumselector_folder.png" width="250px"/>
