@@ -18,9 +18,6 @@
 ######œ‡≤·∂‡—°
 
 ##‘§¿¿£∫
-![](./AlbumSelector/screenshot/Albumselector_start.png)
-![](./AlbumSelector/screenshot/Albumselector_pics.png)
-![](./AlbumSelector/screenshot/Albumselector_folder.png)
 <image src="./AlbumSelector/screenshot/Albumselector_start.png" width="250px"/>
 <image src="./AlbumSelector/screenshot/Albumselector_pics.png" width="250px"/>
 <image src="./AlbumSelector/screenshot/Albumselector_folder.png" width="250px"/>
