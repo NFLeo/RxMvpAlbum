@@ -8,7 +8,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.text.TextUtils;
 
-import com.albumselector.album.ui.PhotoActivity;
+import com.albumselector.album.ui.mvp.BaseMvpActivity;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -54,7 +54,7 @@ public class FileUtils {
             Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
             Uri uri = Uri.fromFile(myCaptureFile);
             intent.setData(uri);
-            ((PhotoActivity) context).sendBroadcast(intent);
+            ((BaseMvpActivity) context).sendBroadcast(intent);
 
         } catch (IOException e) {
             e.printStackTrace();

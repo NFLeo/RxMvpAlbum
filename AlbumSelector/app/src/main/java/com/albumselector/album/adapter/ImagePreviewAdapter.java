@@ -6,7 +6,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.albumselector.R;
-import com.albumselector.album.entity.ImageBean;
 import com.albumselector.album.widget.photoview.PhotoView;
 import com.bumptech.glide.Glide;
 
@@ -22,9 +21,9 @@ public class ImagePreviewAdapter extends RecyclingPagerAdapter {
 
     private Context context;
     private LayoutInflater mInflater;
-    private List<ImageBean> mMediaList;
+    private List<String> mMediaList;
 
-    public ImagePreviewAdapter(Context context, List<ImageBean> list) {
+    public ImagePreviewAdapter(Context context, List<String> list) {
         this.context = context;
         this.mInflater = LayoutInflater.from(context);
         this.mMediaList = list;
@@ -32,12 +31,11 @@ public class ImagePreviewAdapter extends RecyclingPagerAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup container) {
-        ImageBean imageBean = mMediaList.get(position);
+        String imageBean = mMediaList.get(position);
         View view = mInflater.inflate(R.layout.item_image_preview_list, null);
         PhotoView ivImage = (PhotoView) view.findViewById(R.id.iv_media_image);
-        String path = imageBean.getImagePath();
 
-        Glide.with(context).load(new File(path)).asBitmap().into(ivImage);
+        Glide.with(context).load(new File(imageBean)).asBitmap().into(ivImage);
         return view;
     }
 

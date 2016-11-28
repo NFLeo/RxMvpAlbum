@@ -57,7 +57,7 @@ public class PhotoPreviewActivity extends BaseMvpActivity implements ViewPager.O
     }
 
     private void setData() {
-        RxBus.getDefault().toObservableSticky(ImageSelectedEvent.class)
+        rxBusManager.add(RxBus.getDefault().toObservableSticky(ImageSelectedEvent.class)
                 .filter(new Func1<ImageSelectedEvent, Boolean>() {
                     @Override
                     public Boolean call(ImageSelectedEvent imageSelectedEvent) {
@@ -70,9 +70,9 @@ public class PhotoPreviewActivity extends BaseMvpActivity implements ViewPager.O
                         imagePreviewAdapter = new ImagePreviewAdapter(context, imageSelectedEvent.getImageBean());
                         mViewPager.setAdapter(imagePreviewAdapter);
                     }
-                });
+                }));
 
-        RxBus.getDefault().toObservableSticky(KeyEvent.class)
+        rxBusManager.add(RxBus.getDefault().toObservableSticky(KeyEvent.class)
                 .filter(new Func1<KeyEvent, Boolean>() {
                     @Override
                     public Boolean call(KeyEvent keyEvent) {
@@ -91,12 +91,12 @@ public class PhotoPreviewActivity extends BaseMvpActivity implements ViewPager.O
 
                         Log.e("imageStr", imageStr);
                         ImageBean imageBean = new ImageBean(imageStr, true);
-                        List<ImageBean> imageBeanList = new ArrayList<ImageBean>();
-                        imageBeanList.add(imageBean);
+                        List<String> imageBeanList = new ArrayList<String>();
+                        imageBeanList.add(imageStr);
                         imagePreviewAdapter = new ImagePreviewAdapter(context, imageBeanList);
                         mViewPager.setAdapter(imagePreviewAdapter);
                     }
-                });
+                }));
     }
 
     private void setView() {

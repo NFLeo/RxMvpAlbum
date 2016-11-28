@@ -14,7 +14,6 @@ import android.widget.TextView;
 
 import com.albumselector.R;
 import com.albumselector.album.baserx.RxBus;
-import com.albumselector.album.entity.ImageBean;
 import com.albumselector.album.rxbus.event.ImageSelectedEvent;
 import com.albumselector.album.widget.RecyclerImageView;
 import com.bumptech.glide.Glide;
@@ -36,7 +35,7 @@ import rx.functions.Func1;
 public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHolder> {
 
     private Context context;
-    private List<ImageBean> mImageBeanList;
+    private List<String> mImageBeanList;
     private LayoutInflater mInflater;
     private int mImageSize;
     private Drawable mImageViewBg;
@@ -45,7 +44,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
 
     private boolean isSignalCheck;
 
-    public ImageAdapter(Context context, List<ImageBean> list, int screenWidth) {
+    public ImageAdapter(Context context, List<String> list, int screenWidth) {
         this.context = context;
         this.mImageBeanList = list;
         this.mInflater = LayoutInflater.from(context);
@@ -64,8 +63,8 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
         if (mImageBeanList == null || mImageBeanList.size() == 0)
             return;
 
-        ImageBean imageBean = mImageBeanList.get(position);
-        if(position == 0 && "".equals(imageBean.getImagePath())) {
+        String imageBean = mImageBeanList.get(position);
+        if(position == 0 && "".equals(imageBean)) {
             holder.mCbCheck.setVisibility(View.GONE);
             holder.mIvImageImage.setVisibility(View.GONE);
             holder.mLlCamera.setVisibility(View.VISIBLE);
@@ -82,26 +81,16 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
             holder.mIvImageImage.setVisibility(View.VISIBLE);
             holder.mLlCamera.setVisibility(View.GONE);
 
-            holder.mCbCheck.setChecked(imageBean.isSelected());
+            holder.mCbCheck.setChecked(selectedImageBean.contains(imageBean));
 
-//            if(((PhotoActivity) context).getCheckedList() != null && ((PhotoActivity) context).getCheckedList().contains(ImageBean)){
-//                holder.mCbCheck.setChecked(true);
-//            } else {
-//                holder.mCbCheck.setChecked(false);
-//            }
-
-            String path = imageBean.getImagePath();
+//            String path = imageBean.getImagePath();
 
             holder.mIvImageImage.setBackground(mImageViewBg);
 
             Glide.with(context)
-                    .load(new File(path)).asBitmap()
+                    .load(new File(imageBean)).asBitmap()
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .into(holder.mIvImageImage);
-
-//            Glide.with(context).load(new File(path)).crossFade().
-//                    diskCacheStrategy(DiskCacheStrategy.NONE).
-//                    into(holder.mIvImageImage);
         }
     }
 
@@ -113,40 +102,8 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
     //记录上次选择，用于单选
     int lastPos;
 
-    private List<ImageBean> getSelected() {
-        final List<ImageBean> selectedImageBean = new ArrayList<>();
-
-        Observable.from(mImageBeanList)
-                .filter(new Func1<ImageBean, Boolean>() {
-                    @Override
-                    public Boolean call(ImageBean imageBean) {
-                        return imageBean.isSelected() && !"".equals(imageBean.getImagePath());
-                    }
-                })
-                .flatMap(new Func1<ImageBean, Observable<List<ImageBean>>>() {
-            @Override
-            public Observable<List<ImageBean>> call(ImageBean imageBean) {
-                List<ImageBean> selectImageBean = new ArrayList<ImageBean>();
-
-                if (imageBean.isSelected())
-                    selectImageBean.add(imageBean);
-
-                return Observable.just(selectImageBean);
-            }
-        }).subscribe(new Action1<List<ImageBean>>() {
-            @Override
-            public void call(List<ImageBean> imageBeen) {
-                selectedImageBean.addAll(imageBeen);
-                Log.e("SelectedImage", imageBeen.size() + "");
-            }
-        });
-
-        Log.e("selectedImageBean", selectedImageBean.size() + "");
-        RxBus.getDefault().postSticky(new ImageSelectedEvent(selectedImageBean));
-        RxBus.getDefault().post(new ImageSelectedEvent(selectedImageBean));
-
-        return selectedImageBean;
-    }
+    //统一记录选中的所有图片
+    private List<String> selectedImageBean = new ArrayList<>();
 
     protected class GridViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
@@ -177,27 +134,27 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
         {
             //获取并处理当前点击位置
             int imagePos = getLayoutPosition();
-            ImageBean imageBean = mImageBeanList.get(imagePos);
+            String imageBean = mImageBeanList.get(imagePos);
 
             if (!isSignalCheck) {
 
+                //清空图片选中容器
+                selectedImageBean.clear();
+
                 setRadioDisChecked(parentView);
                 //设置上一个view未选中状态
-                mImageBeanList.get(lastPos).setSelected(false);
+//                mImageBeanList.get(lastPos).setSelected(false);
 
                 lastPos = imagePos;
             }
 
-            mCbCheck.setChecked(!imageBean.isSelected());
+            mCbCheck.setChecked(!selectedImageBean.contains(imageBean));
+            notifySelectedImageBean(imageBean, !selectedImageBean.contains(imageBean));
 
             //设置当前view状态
-            mImageBeanList.get(imagePos).setSelected(!imageBean.isSelected());
-
-
+//            mImageBeanList.get(imagePos).setSelected(!imageBean.isSelected());
 
             notifyItemChanged(imagePos);
-
-            getSelected();
         }
 
         /**
@@ -217,15 +174,20 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
                 }
             }
         }
+    }
 
-        public GridViewHolder(View itemView) {
-            super(itemView);
-            mIvImageImage = (RecyclerImageView) itemView.findViewById(R.id.iv_image_image);
-            mCbCheck = (AppCompatCheckBox) itemView.findViewById(R.id.cb_check);
+    private void notifySelectedImageBean(String imageBean, boolean isAdd)
+    {
+        //避免重复添加
+        if (imageBean != null && !"".equals(imageBean)) {
+            if (isAdd)
+                selectedImageBean.add(imageBean);
+            else
+                selectedImageBean.remove(imageBean);
+        } else return;
 
-            mLlCamera = (LinearLayout) itemView.findViewById(R.id.ll_camera);
-            mTvCameraTxt = (TextView) itemView.findViewById(R.id.tv_camera_txt);
-            mIvCameraImage = (ImageView) itemView.findViewById(R.id.iv_camera_image);
-        }
+        Log.e("selectedImageBean", selectedImageBean.size() + "");
+        RxBus.getDefault().postSticky(new ImageSelectedEvent(selectedImageBean));
+        RxBus.getDefault().post(new ImageSelectedEvent(selectedImageBean));
     }
 }

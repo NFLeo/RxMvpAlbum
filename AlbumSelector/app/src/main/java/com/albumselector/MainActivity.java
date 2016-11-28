@@ -11,32 +11,33 @@ import android.widget.TextView;
 import com.albumselector.album.baserx.RxBus;
 import com.albumselector.album.entity.Configuration;
 import com.albumselector.album.rxbus.event.KeyEvent;
-import com.albumselector.album.ui.PhotoActivity;
 import com.albumselector.album.ui.PhotoPickerActivity;
+import com.albumselector.album.ui.mvp.BaseMvpActivity;
+import com.albumselector.album.ui.mvp.BasePresenter;
 import com.bumptech.glide.Glide;
 
 import rx.Observable;
 import rx.functions.Action1;
 import rx.functions.Func1;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseMvpActivity {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+    protected BasePresenter createPresenterInstance() {
+        return null;
+    }
 
+    @Override
+    protected int getLayoutId() {
+        return R.layout.activity_main;
+    }
+
+    @Override
+    protected void onViewCreated() {
         TextView textView = (TextView) findViewById(R.id.text);
         textView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                Intent intent = new Intent(MainActivity.this, PhotoActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                Bundle bundle = new Bundle();
-                bundle.putParcelable(PhotoActivity.EXTRA_CONFIGURATION, new Configuration());
-                intent.putExtras(bundle);
-                startActivity(intent);
             }
         });
 
@@ -52,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
 
         final ImageView imageView = (ImageView) findViewById(R.id.image);
 
-        RxBus.getDefault().toObservable(KeyEvent.class)
+        rxBusManager.add(RxBus.getDefault().toObservable(KeyEvent.class)
                 .flatMap(new Func1<KeyEvent, Observable<String>>() {
                     @Override
                     public Observable<String> call(KeyEvent keyEvent) {
@@ -70,6 +71,6 @@ public class MainActivity extends AppCompatActivity {
                     public void call(String s) {
                         Glide.with(MainActivity.this).load(s).asBitmap().into(imageView);
                     }
-                });
+                }));
     }
 }

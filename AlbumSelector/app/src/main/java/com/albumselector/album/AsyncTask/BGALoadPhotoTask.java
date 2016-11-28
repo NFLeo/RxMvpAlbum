@@ -10,7 +10,6 @@ import android.text.TextUtils;
 
 import com.albumselector.R;
 import com.albumselector.album.entity.FolderBean;
-import com.albumselector.album.entity.ImageBean;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -68,7 +67,7 @@ public class BGALoadPhotoTask extends BGAAsyncTask<Void, ArrayList<FolderBean>> 
                             firstInto = false;
                         }
                         // 所有图片目录每次都添加
-                        allImageFolderModel.addLastImage(new ImageBean(imagePath, false));
+                        allImageFolderModel.addLastImage(imagePath);
 
                         String folderPath = null;
                         // 其他图片目录
@@ -95,7 +94,7 @@ public class BGALoadPhotoTask extends BGAAsyncTask<Void, ArrayList<FolderBean>> 
                                 otherImageFolderModel = new FolderBean(folderName, imagePath);
                                 imageFolderModelMap.put(folderPath, otherImageFolderModel);
                             }
-                            otherImageFolderModel.addLastImage(new ImageBean(imagePath, false));
+                            otherImageFolderModel.addLastImage(imagePath);
                         }
                     }
                 }

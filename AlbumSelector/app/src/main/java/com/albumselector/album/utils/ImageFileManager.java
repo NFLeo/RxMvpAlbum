@@ -12,8 +12,6 @@ import android.util.Log;
 
 import com.albumselector.album.entity.FolderBean;
 import com.albumselector.album.entity.ImageBean;
-import com.albumselector.album.rxbus.RxBus;
-import com.albumselector.album.rxbus.event.ConstantsEvent;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -350,9 +348,6 @@ public class ImageFileManager
         } while (imageBeanList.size() < mPageSize);
 
         System.out.println("ALBUM_ImageNum" + ImageNum + "||ALBUM_ImageList" + imageBeanList.size());
-
-        ConstantsEvent.ImageRefreshIndex = curPageIndex - 1;
-        RxBus.getDefault().post(ConstantsEvent.ImageRefreshIndex);
 
         return imageBeanList;
     }

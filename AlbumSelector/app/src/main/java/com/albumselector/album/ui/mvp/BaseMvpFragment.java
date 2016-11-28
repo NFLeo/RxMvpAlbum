@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.albumselector.album.baserx.RxBusManager;
 import com.albumselector.album.ui.listener.OnOnceClickListener;
 
 /**
@@ -21,11 +22,13 @@ public abstract class BaseMvpFragment<V extends BaseView, P extends BasePresente
 
     protected P presenter;
     private View contentView;
+    private RxBusManager rxBusManager;
 
     @SuppressWarnings("unchecked")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        rxBusManager = new RxBusManager();
         presenter = createPresenterInstance();
         if (presenter != null) {
             presenter.attachView((V) this);
@@ -104,6 +107,8 @@ public abstract class BaseMvpFragment<V extends BaseView, P extends BasePresente
 
     @Override
     public void onDestroy() {
+
+        rxBusManager.clear();
         if (presenter != null) {
             presenter.detachView();
         }

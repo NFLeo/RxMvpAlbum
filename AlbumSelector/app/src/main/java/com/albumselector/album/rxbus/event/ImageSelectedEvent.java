@@ -17,13 +17,13 @@ import java.util.List;
   */
 public class ImageSelectedEvent {
 
-    private List<ImageBean> imageBeanList;
+    private List<String> imageBeanList;
 
-    public ImageSelectedEvent(List<ImageBean> imageBeanList){
+    public ImageSelectedEvent(List<String> imageBeanList){
         this.imageBeanList = imageBeanList;
     }
 
-    public List<ImageBean> getImageBean() {
+    public List<String> getImageBean() {
         return this.imageBeanList;
     }
 }

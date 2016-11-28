@@ -16,7 +16,7 @@ public class FolderBean
     private int folderSize;           //相册文件大小
     private boolean isCheck;          //相册文件选中状态
 
-    private ArrayList<ImageBean> mImages = new ArrayList<>();
+    private ArrayList<String> mImages = new ArrayList<>();
     private boolean mTakePhotoEnabled;
 
     public FolderBean(String folderId, String folderName, String folderCover, int folderSize) {
@@ -35,7 +35,7 @@ public class FolderBean
         mTakePhotoEnabled = takePhotoEnabled;
         if (takePhotoEnabled) {
             // 拍照
-            mImages.add(new ImageBean("", true));
+            mImages.add("");
         }
     }
 
@@ -54,11 +54,11 @@ public class FolderBean
         return mTakePhotoEnabled;
     }
 
-    public void addLastImage(ImageBean imagePath) {
+    public void addLastImage(String imagePath) {
         mImages.add(imagePath);
     }
 
-    public ArrayList<ImageBean> getImages() {
+    public ArrayList<String> getImages() {
         return mImages;
     }
 

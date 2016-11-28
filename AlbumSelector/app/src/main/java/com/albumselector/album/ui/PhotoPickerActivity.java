@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import rx.Observable;
 import rx.Subscription;
 import rx.functions.Action1;
 import rx.functions.Func1;
@@ -85,8 +86,8 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
     private List<FolderBean> folderBeanList;                   //相册数据源
 
     private ImageAdapter imageAdapter;                         //照片列表适配器
-    private List<ImageBean> imageBeanList;                     //照片数据源
-    private List<ImageBean> selectImageBeanList;               //已选照片
+    private List<String> imageBeanList;                     //照片数据源
+    private List<String> selectImageBeanList;               //已选照片
 
     private Subscription mSubscrImageCheckChangeEvent;             //监听照片选择
     private Subscription mSubscrImageRefreshIndexEvent;            //监听照片分页查询分页序号
@@ -129,7 +130,7 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
             imagePickerManager = new ImagePickerManager(this, imageDir);
         }
 
-        RxBus.getDefault().toObservable(ImageSelectedEvent.class)
+        rxBusManager.add(RxBus.getDefault().toObservable(ImageSelectedEvent.class)
                 .filter(new Func1<ImageSelectedEvent, Boolean>() {
                     @Override
                     public Boolean call(ImageSelectedEvent imageSelectedEvent) {
@@ -141,7 +142,7 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
                     public void call(ImageSelectedEvent imageSelectedEvent) {
                         selectImageBeanList = imageSelectedEvent.getImageBean();
                     }
-                });
+                }));
     }
 
     private void initView()
@@ -202,6 +203,8 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
         folderAdapter.notifyDataSetChanged();
 
         imageBeanList.clear();
+
+
         imageBeanList.addAll(folderBeen.get(0).getImages());
         imageAdapter.notifyDataSetChanged();
     }
@@ -224,6 +227,7 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
         hideFolderView(view);
 
         imageBeanList.clear();
+
         imageBeanList.addAll(bucketBean.getImages());
         imageAdapter.notifyDataSetChanged();
     }
