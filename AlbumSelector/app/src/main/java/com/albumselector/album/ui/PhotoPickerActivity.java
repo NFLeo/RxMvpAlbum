@@ -49,11 +49,11 @@ import rx.Subscription;
 import rx.functions.Action1;
 import rx.functions.Func1;
 
-/**
- * @desc:
- * @author: Leo
- * @date: 2016/11/24
- */
+ /**
+  * @desc:         图片选择界面
+  * @author:       Leo
+  * @date:         2016/11/28
+  */
 public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask.Callback<ArrayList<FolderBean>>,
         FolderAdapter.OnRecyclerViewItemClickListener, FooterAdapter.OnItemClickListener, View.OnClickListener
 {
