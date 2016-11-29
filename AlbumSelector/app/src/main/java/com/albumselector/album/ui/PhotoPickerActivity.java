@@ -1,7 +1,6 @@
 package com.albumselector.album.ui;
 
 import android.content.Intent;
-import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -18,18 +17,16 @@ import com.albumselector.album.adapter.FolderAdapter;
 import com.albumselector.album.adapter.ImageAdapter;
 import com.albumselector.album.baserx.RxBus;
 import com.albumselector.album.entity.FolderBean;
-import com.albumselector.album.entity.ImageBean;
 import com.albumselector.album.model.PhotoModelImpl;
 import com.albumselector.album.presenter.PhotoPickerPresenterImpl;
 import com.albumselector.album.presenter.PhotoPresenterImpl;
 import com.albumselector.album.rxbus.event.ImageBuilderEvent;
 import com.albumselector.album.rxbus.event.ImageSelectedEvent;
-import com.albumselector.album.rxbus.event.KeyEvent;
 import com.albumselector.album.ui.mvp.BaseMvpActivity;
 import com.albumselector.album.ui.mvp.BasePresenter;
 import com.albumselector.album.utils.AlbumBuilder;
+import com.albumselector.album.utils.RVOnScrollListener;
 import com.albumselector.album.utils.ImagePickerManager;
-import com.albumselector.album.utils.MediaScanner;
 import com.albumselector.album.utils.anim.Animation;
 import com.albumselector.album.utils.anim.AnimationListener;
 import com.albumselector.album.utils.anim.SlideInUnderneathAnimation;
@@ -39,7 +36,7 @@ import com.albumselector.album.widget.HorizontalDividerItemDecoration;
 import com.albumselector.album.widget.MarginDecoration;
 import com.albumselector.album.widget.RecyclerViewFinal;
 import com.albumselector.album.widget.cropimage.CropActivity;
-import com.albumselector.album.widget.cropimage.CropFragment;
+import com.bumptech.glide.Glide;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,15 +44,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import rx.Observable;
-import rx.Subscription;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 
- /**
-  * @desc:         图片选择界面
-  * @author:       Leo
-  * @date:         2016/11/28
-  */
+/**
+ * @desc:         图片选择界面
+ * @author:       Leo
+ * @date:         2016/11/28
+ */
 public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask.Callback<ArrayList<FolderBean>>,
         FolderAdapter.OnRecyclerViewItemClickListener, FooterAdapter.OnItemClickListener, View.OnClickListener
 {
@@ -73,8 +72,6 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
     private RelativeLayout rlFolderOverview;
     private RecyclerView rvFolder;
 
-    private MediaScanner mMediaScanner;
-
     private File mImageStoreDir;
     private String mImagePath;
     private ImagePickerManager imagePickerManager;
@@ -88,10 +85,6 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
     private ImageAdapter imageAdapter;                         //照片列表适配器
     private List<String> imageBeanList;                        //照片数据源
     private List<String> selectImageBeanList;                  //已选照片
-
-    private Subscription mSubscrImageCheckChangeEvent;             //监听照片选择
-    private Subscription mSubscrImageRefreshIndexEvent;            //监听照片分页查询分页序号
-    private Subscription mSubscrCloseImageViewPageFragmentEvent;   //监听照片预览关闭事件
 
     private int PageIndex = 1;
     private int PageSize = 32;
@@ -172,9 +165,10 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
         rvImage.setLayoutManager(gridLayoutManager);
 
         imageBeanList = new ArrayList<>();
-        imageAdapter = new ImageAdapter(context, imageBeanList, 1080, albumBuilder);
+        imageAdapter = new ImageAdapter(this, imageBeanList, 1080, albumBuilder);
         rvImage.setAdapter(imageAdapter);
         rvImage.setOnItemClickListener(this);
+        rvImage.setFooterViewHide(true);
 
         //初始化相册列表
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(context);
@@ -292,6 +286,46 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
         rootView.setOnClickListener(this);
         tvReview.setOnClickListener(this);
         tvChooseCount.setOnClickListener(this);
+
+        rvImage.addOnScrollListener(new RVOnScrollListener(this));
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        doActivityClear();
+    }
+
+    private void doActivityClear() {
+        Log.e("TEST CLEAR", "SSS");
+        Observable.create(new Observable.OnSubscribe<Object>() {
+            @Override
+            public void call(Subscriber<? super Object> subscriber) {
+                Log.e("TEST CLEAR", "io");
+                Glide.get(context).clearDiskCache();
+                subscriber.onNext(null);
+            }
+        }).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<Object>() {
+                    @Override
+                    public void call(Object o) {
+                        Log.e("TEST CLEAR", "mainThread");
+                        Glide.get(context).clearMemory();
+                        clearList(folderBeanList);
+                        clearList(imageBeanList);
+                        clearList(selectImageBeanList);
+                        System.gc();
+                    }
+                });
+    }
+
+    private <E> void clearList(List<E> list)
+    {
+        if (list != null) {
+            list.clear();
+            list = null;
+        }
     }
 
     @Override

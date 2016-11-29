@@ -9,7 +9,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.albumselector.album.baserx.RxBus;
-import com.albumselector.album.entity.Configuration;
 import com.albumselector.album.rxbus.event.ImageBuilderEvent;
 import com.albumselector.album.rxbus.event.KeyEvent;
 import com.albumselector.album.ui.PhotoPickerActivity;

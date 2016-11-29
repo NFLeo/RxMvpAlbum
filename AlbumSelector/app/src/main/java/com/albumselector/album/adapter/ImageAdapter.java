@@ -1,5 +1,6 @@
 package com.albumselector.album.adapter;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.support.v7.widget.AppCompatCheckBox;
@@ -17,6 +18,7 @@ import com.albumselector.R;
 import com.albumselector.album.baserx.RxBus;
 import com.albumselector.album.rxbus.event.ImageSelectedEvent;
 import com.albumselector.album.utils.AlbumBuilder;
+import com.albumselector.album.utils.GlideImageloader;
 import com.albumselector.album.widget.RecyclerImageView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -36,16 +38,14 @@ import rx.functions.Func1;
  */
 public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHolder> {
 
-    private Context context;
+    private Activity context;
     private List<String> mImageBeanList;
     private LayoutInflater mInflater;
     private AlbumBuilder albumBuilder;
     private int mImageSize;
-    private Drawable mImageViewBg;
-    private Drawable mCameraImage;
     private int mCameraTextColor;
 
-    public ImageAdapter(Context context, List<String> list, int screenWidth, AlbumBuilder albumBuilder) {
+    public ImageAdapter(Activity context, List<String> list, int screenWidth, AlbumBuilder albumBuilder) {
         this.context = context;
         this.albumBuilder = albumBuilder;
         this.mImageBeanList = list;
@@ -68,24 +68,13 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
         String imageBean = mImageBeanList.get(position);
         if(position == 0 && albumBuilder.isTakeCamera() && "".equals(imageBean)) {
             holder.mCbCheck.setVisibility(View.GONE);
-            holder.mIvImageImage.setVisibility(View.GONE);
-            holder.mLlCamera.setVisibility(View.VISIBLE);
-            holder.mIvCameraImage.setImageDrawable(mCameraImage);
-            holder.mTvCameraTxt.setText("Camera");
-            holder.mCbCheck.setVisibility(View.GONE);
+            holder.mIvImageImage.setImageResource(-1);
+            holder.mIvCameraImage.setImageResource(R.drawable.selecter_photo_button);
         } else {
             holder.mCbCheck.setVisibility(View.VISIBLE);
             holder.mIvImageImage.setVisibility(View.VISIBLE);
-            holder.mLlCamera.setVisibility(View.GONE);
-
             holder.mCbCheck.setChecked(selectedImageBean.contains(imageBean));
-
-            holder.mIvImageImage.setBackground(mImageViewBg);
-
-            Glide.with(context)
-                    .load(new File(imageBean)).asBitmap()
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .into(holder.mIvImageImage);
+            GlideImageloader.displayImage(context, holder.mIvImageImage, imageBean, mImageSize);
         }
     }
 
@@ -105,10 +94,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
         RecyclerImageView mIvImageImage;
         AppCompatCheckBox mCbCheck;
 
-        LinearLayout mLlCamera;
-        TextView mTvCameraTxt;
         ImageView mIvCameraImage;
-
         ViewGroup parentView;
 
         public GridViewHolder(ViewGroup parentView, View itemView) {
@@ -117,8 +103,6 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
             mIvImageImage = (RecyclerImageView) itemView.findViewById(R.id.iv_image_image);
             mCbCheck = (AppCompatCheckBox) itemView.findViewById(R.id.cb_check);
 
-            mLlCamera = (LinearLayout) itemView.findViewById(R.id.ll_camera);
-            mTvCameraTxt = (TextView) itemView.findViewById(R.id.tv_camera_txt);
             mIvCameraImage = (ImageView) itemView.findViewById(R.id.iv_camera_image);
 
             mCbCheck.setOnClickListener(this);

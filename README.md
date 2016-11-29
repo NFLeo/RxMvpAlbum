@@ -11,7 +11,8 @@
 
 ##第二版主要功能：
 ######1.相册多选
-######2.可简单设置相册模式
+######2.可简单设置相册功能模式
+######3.优化相册图片加载，600张图，内存占用维持在40M多点。
 
 ##预览：
 <image src="./AlbumSelector/screenshot/Albumselector_start.png" width="250px"/>
