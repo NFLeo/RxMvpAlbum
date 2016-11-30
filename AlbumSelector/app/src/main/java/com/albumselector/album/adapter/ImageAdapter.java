@@ -68,13 +68,14 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
         String imageBean = mImageBeanList.get(position);
         if(position == 0 && albumBuilder.isTakeCamera() && "".equals(imageBean)) {
             holder.mCbCheck.setVisibility(View.GONE);
-            holder.mIvImageImage.setImageResource(-1);
+            holder.mIvImageImage.setVisibility(View.GONE);
+            holder.mIvImageImage.setImageBitmap(null);
             holder.mIvCameraImage.setImageResource(R.drawable.selecter_photo_button);
         } else {
             holder.mCbCheck.setVisibility(View.VISIBLE);
             holder.mIvImageImage.setVisibility(View.VISIBLE);
             holder.mCbCheck.setChecked(selectedImageBean.contains(imageBean));
-            GlideImageloader.displayImage(context, holder.mIvImageImage, imageBean, mImageSize);
+            GlideImageloader.displayImage(holder.mIvImageImage, imageBean, mImageSize);
         }
     }
 
@@ -117,8 +118,11 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.GridViewHold
 
             if (!albumBuilder.isMutiSelect()) {
 
-                //清空图片选中容器
-                selectedImageBean.clear();
+                //当前未选中时，清除上一个选中状态
+                if (!selectedImageBean.contains(imageBean)) {
+                    //清空图片选中容器
+                    selectedImageBean.clear();
+                }
                 setRadioDisChecked(parentView);
                 lastPos = imagePos;
             } else if (!selectedImageBean.contains(imageBean) && selectedImageBean.size() >= albumBuilder.getMaxSize()) {

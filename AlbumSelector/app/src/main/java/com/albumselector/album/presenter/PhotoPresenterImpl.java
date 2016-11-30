@@ -82,7 +82,6 @@ public class PhotoPresenterImpl extends PhotoContract.Presenter {
                     @Override
                     public void onNext(List<ImageBean> imageBeen) {
                         Log.e("TIME", "time XXX");
-                        mView.imageCallback(imageBeen);
                     }
                 });
     }

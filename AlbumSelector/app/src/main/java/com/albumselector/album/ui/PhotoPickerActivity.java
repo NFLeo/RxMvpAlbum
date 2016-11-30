@@ -1,6 +1,7 @@
 package com.albumselector.album.ui;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Environment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -25,8 +26,8 @@ import com.albumselector.album.rxbus.event.ImageSelectedEvent;
 import com.albumselector.album.ui.mvp.BaseMvpActivity;
 import com.albumselector.album.ui.mvp.BasePresenter;
 import com.albumselector.album.utils.AlbumBuilder;
-import com.albumselector.album.utils.RVOnScrollListener;
 import com.albumselector.album.utils.ImagePickerManager;
+import com.albumselector.album.utils.RVOnScrollListener;
 import com.albumselector.album.utils.anim.Animation;
 import com.albumselector.album.utils.anim.AnimationListener;
 import com.albumselector.album.utils.anim.SlideInUnderneathAnimation;
@@ -63,18 +64,14 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
     //裁剪的请求码
     private static final int REQUEST_CODE_CROP_PHOTO = 222;
 
-    private BGALoadPhotoTask mLoadPhotoTask;
-    private AlbumBuilder albumBuilder;
+    private BGALoadPhotoTask mLoadPhotoTask;                   //开启线程获取图片
+    private AlbumBuilder albumBuilder;                         //相册配置类
 
-    private RecyclerViewFinal rvImage;
-    private TextView tvReview;
+    private RecyclerViewFinal rvImage;                         //可加载的rv列表
+    private TextView tvReview;                                 //预览按钮
     private TextView tvChooseCount;
-    private RelativeLayout rlFolderOverview;
-    private RecyclerView rvFolder;
-
-    private File mImageStoreDir;
-    private String mImagePath;
-    private ImagePickerManager imagePickerManager;
+    private RelativeLayout rlFolderOverview;                   //相册列表外层view
+    private RecyclerView rvFolder;                             //相册列表rv
 
     private PhotoPresenterImpl photoPresenter;
     private PhotoModelImpl photoModel;
@@ -86,9 +83,11 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
     private List<String> imageBeanList;                        //照片数据源
     private List<String> selectImageBeanList;                  //已选照片
 
+    private ImagePickerManager imagePickerManager;
+    private int folderPosition = 0;                            //记录选中的相册序号
+
     private int PageIndex = 1;
     private int PageSize = 32;
-    private String mFlolderId = String.valueOf(Integer.MIN_VALUE);
 
     @Override
     public void onStart() {
@@ -200,13 +199,14 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
         mLoadPhotoTask = null;
         folderBeanList.clear();
         folderBeanList.addAll(folderBeen);
-        folderAdapter.setSelectedBucket(folderBeen.get(0));               //初始标记默认选中所有相册
+
+        FolderBean bucketBean = folderBeanList.get(folderPosition);
+        bucketBean.setCheck(true);
+        folderAdapter.setSelectedBucket(bucketBean, folderPosition);                  //初始标记默认选中所有相册
         folderAdapter.notifyDataSetChanged();
 
         imageBeanList.clear();
-
-
-        imageBeanList.addAll(folderBeen.get(0).getImages());
+        imageBeanList.addAll(folderBeen.get(folderPosition).getImages());
         imageAdapter.notifyDataSetChanged();
     }
 
@@ -224,11 +224,12 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
         //记录相册选中状态
         bucketBean.setCheck(true);
         folderAdapter.setSelectedBucket(bucketBean, position);
+        //记录相册序号
+        folderPosition = position;
 
         hideFolderView(view);
 
         imageBeanList.clear();
-
         imageBeanList.addAll(bucketBean.getImages());
         imageAdapter.notifyDataSetChanged();
     }
@@ -236,7 +237,13 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
     @Override
     public void onItemClick(RecyclerView.ViewHolder holder, int position)
     {
-        if (albumBuilder.isTakeCamera() && position == 0)
+        /**
+         * 拍照三个条件
+         * 1.可拍照
+         * 2.列表第一项
+         * 3.处于“所有相册”一栏
+         */
+        if (albumBuilder.isTakeCamera() && position == 0 && folderPosition == 0)
         {
             try {
                 startActivityForResult(imagePickerManager.getTakePictureIntent(), REQUEST_CODE_TAKE_PHOTO);
@@ -291,17 +298,18 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
     }
 
     @Override
-    public void onBackPressed() {
+    public void onBackPressed()
+    {
         super.onBackPressed();
         doActivityClear();
     }
 
-    private void doActivityClear() {
-        Log.e("TEST CLEAR", "SSS");
+    //退出Acitivity时清除界面内存消耗对象
+    private void doActivityClear()
+    {
         Observable.create(new Observable.OnSubscribe<Object>() {
             @Override
             public void call(Subscriber<? super Object> subscriber) {
-                Log.e("TEST CLEAR", "io");
                 Glide.get(context).clearDiskCache();
                 subscriber.onNext(null);
             }
@@ -310,7 +318,6 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
                 .subscribe(new Action1<Object>() {
                     @Override
                     public void call(Object o) {
-                        Log.e("TEST CLEAR", "mainThread");
                         Glide.get(context).clearMemory();
                         clearList(folderBeanList);
                         clearList(imageBeanList);
@@ -320,6 +327,7 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
                 });
     }
 
+    //列表判空
     private <E> void clearList(List<E> list)
     {
         if (list != null) {
@@ -343,15 +351,17 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
                 if (selectImageBeanList == null || selectImageBeanList.size() == 0)
                     return;
 
-                //直接裁剪
-//                try {
-//                    startActivityForResult(imagePickerManager.getCropPictureIntent(context,
-//                            selectImageBeanList.get(0).getImagePath()), REQUEST_CODE_CROP_PHOTO);
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
+                if (albumBuilder.isMutiSelect()) {
+                    startActivity(new Intent(context, PhotoPreviewActivity.class));
+                } else {//直接裁剪
+                    try {
+                        startActivityForResult(imagePickerManager.getCropPictureIntent(context,
+                                selectImageBeanList.get(0)), REQUEST_CODE_CROP_PHOTO);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
 
-                startActivity(new Intent(context, PhotoPreviewActivity.class));
                 break;
             default:
                 hideFolderView(v);
@@ -396,7 +406,6 @@ public class PhotoPickerActivity extends BaseMvpActivity implements BGAAsyncTask
 //                    // 从拍照预览界面返回，刷新图库
 //                    mImageCaptureManager.refreshGallery();
 //                }
-//
 //            }
         }
     }

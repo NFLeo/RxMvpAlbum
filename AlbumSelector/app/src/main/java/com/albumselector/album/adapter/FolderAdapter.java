@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import com.albumselector.R;
 import com.albumselector.album.entity.FolderBean;
+import com.albumselector.album.utils.GlideImageloader;
 import com.albumselector.album.widget.SquareImageView;
 import com.bumptech.glide.Glide;
 
@@ -61,16 +62,9 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.BucketView
             holder.mRbSelected.setVisibility(View.GONE);
         }
 
-//        if(mSelectedBucket != null && TextUtils.equals(mSelectedBucket.getFolderId(), bucketBean.getFolderId())) {
-//            holder.mRbSelected.setVisibility(View.VISIBLE);
-//            holder.mRbSelected.setChecked(true);
-//        } else {
-//            holder.mRbSelected.setVisibility(View.GONE);
-//        }
-
         String path = bucketBean.getFolderCover();
 
-        Glide.with(mContext).load(new File(path)).asBitmap().into(holder.mIvBucketCover);
+        GlideImageloader.displayImage(holder.mIvBucketCover, path);
     }
 
     public void setSelectedBucket(FolderBean bucketBean) {

@@ -1,7 +1,5 @@
 package com.albumselector.album.rxbus.event;
 
-import com.albumselector.album.entity.ImageBean;
-
 import java.util.List;
 
  /**

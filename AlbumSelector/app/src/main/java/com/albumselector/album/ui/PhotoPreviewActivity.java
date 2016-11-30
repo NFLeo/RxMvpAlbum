@@ -4,7 +4,9 @@ import android.support.v4.app.NavUtils;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.AppCompatCheckBox;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.albumselector.R;
 import com.albumselector.album.adapter.ImagePreviewAdapter;
@@ -14,6 +16,7 @@ import com.albumselector.album.rxbus.event.ImageSelectedEvent;
 import com.albumselector.album.rxbus.event.KeyEvent;
 import com.albumselector.album.ui.mvp.BaseMvpActivity;
 import com.albumselector.album.ui.mvp.BasePresenter;
+import com.albumselector.album.utils.AlbumBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,11 +31,11 @@ import rx.functions.Func1;
   */
 public class PhotoPreviewActivity extends BaseMvpActivity implements ViewPager.OnPageChangeListener
 {
-    private AppCompatCheckBox mCbCheck;
     private ViewPager mViewPager;
-    private TextView mCropView;
     private ImagePreviewAdapter imagePreviewAdapter;
-    private List<ImageBean> mImageBeanList;
+
+    private List<String> selectedImage;                          //原始图片列表
+    private int mPagerPosition;
 
     @Override
     protected BasePresenter createPresenterInstance() {
@@ -52,11 +55,18 @@ public class PhotoPreviewActivity extends BaseMvpActivity implements ViewPager.O
         setListener();
     }
 
-    private void setListener() {
-
+    @Override
+    public void onStart() {
+        super.onStart();
+        mViewPager.setCurrentItem(mPagerPosition, false);
+        mViewPager.addOnPageChangeListener(this);
     }
 
-    private void setData() {
+    private void setListener() {
+    }
+
+    private void setData()
+    {
         rxBusManager.add(RxBus.getDefault().toObservableSticky(ImageSelectedEvent.class)
                 .filter(new Func1<ImageSelectedEvent, Boolean>() {
                     @Override
@@ -67,33 +77,8 @@ public class PhotoPreviewActivity extends BaseMvpActivity implements ViewPager.O
                 .subscribe(new Action1<ImageSelectedEvent>() {
                     @Override
                     public void call(ImageSelectedEvent imageSelectedEvent) {
-                        imagePreviewAdapter = new ImagePreviewAdapter(context, imageSelectedEvent.getImageBean());
-                        mViewPager.setAdapter(imagePreviewAdapter);
-                    }
-                }));
-
-        rxBusManager.add(RxBus.getDefault().toObservableSticky(KeyEvent.class)
-                .filter(new Func1<KeyEvent, Boolean>() {
-                    @Override
-                    public Boolean call(KeyEvent keyEvent) {
-                        if (keyEvent.getKey() == KeyEvent.PHOTO_CAMERA) {
-                            return keyEvent.getValue() != null;
-                        }
-                        return false;
-                    }
-                })
-                .subscribe(new Action1<KeyEvent>() {
-                    @Override
-                    public void call(KeyEvent image) {
-                        String imageStr = "";
-                        if (KeyEvent.PHOTO_CAMERA == image.getKey())
-                            imageStr = (String) image.getValue();
-
-                        Log.e("imageStr", imageStr);
-                        ImageBean imageBean = new ImageBean(imageStr, true);
-                        List<String> imageBeanList = new ArrayList<String>();
-                        imageBeanList.add(imageStr);
-                        imagePreviewAdapter = new ImagePreviewAdapter(context, imageBeanList);
+                        selectedImage = imageSelectedEvent.getImageBean();
+                        imagePreviewAdapter = new ImagePreviewAdapter(context, selectedImage);
                         mViewPager.setAdapter(imagePreviewAdapter);
                     }
                 }));
@@ -104,23 +89,20 @@ public class PhotoPreviewActivity extends BaseMvpActivity implements ViewPager.O
     }
 
     private void initView() {
-        mCbCheck = (AppCompatCheckBox) findViewById(R.id.cb_check);
         mViewPager = (ViewPager) findViewById(R.id.view_pager);
-        mCropView = (TextView) findViewById(R.id.crop_image);
     }
 
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
     }
 
     @Override
     public void onPageSelected(int position) {
-
+        mPagerPosition = position;
+        String imageStr = selectedImage.get(position);
     }
 
     @Override
     public void onPageScrollStateChanged(int state) {
-
     }
 }

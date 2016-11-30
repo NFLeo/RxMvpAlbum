@@ -1,7 +1,6 @@
 package com.albumselector.album.model;
 
 import com.albumselector.album.entity.FolderBean;
-import com.albumselector.album.entity.ImageBean;
 
 import java.util.List;
 
@@ -12,7 +11,7 @@ import java.util.List;
  */
 public interface BasePhotoView
 {
-    void imageCallback(List<ImageBean> list);
+    void imageCallback(List<String> list);
     void folderCallback(List<FolderBean> list);
     void errorCallback();
 }

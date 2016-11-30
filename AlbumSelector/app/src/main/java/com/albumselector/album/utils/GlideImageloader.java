@@ -30,7 +30,7 @@ public class GlideImageloader {
                 .into(imageView);
     }
 
-    public static void displayImage(Activity context, final ImageView imageView, String path, int width) {
+    public static void displayImage(ImageView imageView, String path, int width) {
         final String finalPath = getPath(path);
 
         if (imageView == null)
@@ -42,6 +42,20 @@ public class GlideImageloader {
                 .error(R.drawable.albumselector_holder_light)
                 .animate(R.anim.slide_alpha_enter)
                 .override(width, width)
+                .into(imageView);
+    }
+
+    public static void displayImage(ImageView imageView, String path) {
+        final String finalPath = getPath(path);
+
+        if (imageView == null)
+            return;
+
+        Glide.with(imageView.getContext()).load(finalPath).asBitmap()
+                .thumbnail(0.4f)
+                .placeholder(R.drawable.albumselector_holder_dark)
+                .error(R.drawable.albumselector_holder_light)
+                .animate(R.anim.slide_alpha_enter)
                 .into(imageView);
     }
 
